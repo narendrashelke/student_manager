@@ -25,12 +25,15 @@ describe('Dashboard', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should compute dashboard metrics accurately', () => {
+  it('should compute dashboard metrics and class GPA accurately', () => {
     expect(component.averageMarks).toBe(87.5);
+    expect(component.classGPA).toBeGreaterThan(3.0);
     expect(component.passingStudents).toBe(4);
     expect(component.passRate).toBe(100);
     expect(component.highestMarks).toBe(95);
     expect(component.lowestMarks).toBe(80);
+    expect(component.subjectAverages.math).toBeDefined();
+    expect(component.getStudentGPA(90)).toBe(4.0);
   });
 
   it('should return recent and top students', () => {

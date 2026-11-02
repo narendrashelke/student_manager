@@ -1,7 +1,14 @@
 import { DecimalPipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { calculateGrade, isPassing, GradeLevel } from './student.model';
+import {
+  calculateGrade,
+  isPassing,
+  calculateGPA,
+  GradeLevel,
+  SUBJECTS,
+  SubjectKey,
+} from './student.model';
 import { StudentService } from './student.service';
 
 @Component({
@@ -12,10 +19,16 @@ import { StudentService } from './student.service';
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
+  readonly subjectsConfig = SUBJECTS;
+
   constructor(public readonly studentService: StudentService) {}
 
   get averageMarks(): number {
     return this.studentService.getAverage();
+  }
+
+  get classGPA(): number {
+    return this.studentService.getClassGPA();
   }
 
   get passingStudents(): number {
@@ -46,8 +59,16 @@ export class Dashboard {
     return this.studentService.getGradeDistribution();
   }
 
+  get subjectAverages(): Record<SubjectKey, number> {
+    return this.studentService.getSubjectAverages();
+  }
+
   getStudentGrade(marks: number): string {
     return calculateGrade(marks);
+  }
+
+  getStudentGPA(marks: number): number {
+    return calculateGPA(marks);
   }
 
   isStudentPassing(marks: number): boolean {

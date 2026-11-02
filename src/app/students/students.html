@@ -12,8 +12,8 @@
       </nav>
 
       <div class="nav-actions">
-        <button type="button" class="action-btn secondary-btn" (click)="exportCsv()" title="Export students list to CSV">
-          <span>↓</span> Export CSV
+        <button type="button" class="action-btn secondary-btn" (click)="exportCsv()" title="Export students list & grades to CSV">
+          <span>↓</span> Export Grades CSV
         </button>
         <button type="button" class="action-btn text-btn" (click)="resetDemoData()" title="Reset to initial 4 students">
           ↺ Reset Demo
@@ -37,9 +37,9 @@
 
     <header class="student-header">
       <div class="header-titles">
-        <span class="eyebrow">ROSTER &amp; ACADEMICS</span>
-        <h1>Student Management</h1>
-        <p>Manage enrolled students, assign grades, track academic results, and maintain records.</p>
+        <span class="eyebrow">ACADEMIC ROSTER &amp; SUBJECT GRADES</span>
+        <h1>Student &amp; GPA Management</h1>
+        <p>Manage multi-subject marks (Math, Science, English, History, Computer Science), calculate weighted GPAs, and monitor academic progress.</p>
       </div>
     </header>
 
@@ -54,39 +54,39 @@
         <span class="card-label">Class Average</span>
         <strong>
           @if (studentService.students.length > 0) {
-            {{ studentService.getAverage() | number: '1.1-1' }}<small>/100</small>
+            {{ studentService.getAverage() | number: '1.1-1' }}<small>%</small>
           } @else {
             —
           }
         </strong>
-        <span class="card-caption">Overall benchmark</span>
+        <span class="card-caption">Mean score across subjects</span>
       </article>
 
       <article class="summary-card">
-        <span class="card-label">Highest Score</span>
+        <span class="card-label">Class GPA Benchmark</span>
         <strong>
           @if (studentService.students.length > 0) {
-            {{ studentService.getHighestMarks() }}<small> pts</small>
+            {{ studentService.getClassGPA() | number: '1.1-1' }}<small>/4.0</small>
           } @else {
             —
           }
         </strong>
-        <span class="card-caption">Top performer score</span>
+        <span class="card-caption">Average Grade Point Average</span>
       </article>
 
       <article class="summary-card">
         <span class="card-label">Pass Rate</span>
         <strong>{{ studentService.getPassRate() }}<small>%</small></strong>
-        <span class="card-caption">{{ studentService.getPassingCount() }} of {{ studentService.students.length }} passed</span>
+        <span class="card-caption">{{ studentService.getPassingCount() }} of {{ studentService.students.length }} passing</span>
       </article>
     </section>
 
     <section class="form-section" [class.editing-active]="isEditing">
       <div class="form-header">
         <div>
-          <h2>{{ isEditing ? 'Edit Student Record' : 'Add New Student' }}</h2>
+          <h2>{{ isEditing ? 'Edit Student & Subject Grades' : 'Enroll Student & Enter Subject Marks' }}</h2>
           <p class="form-subtitle">
-            {{ isEditing ? 'Update student information and save changes.' : 'Enter details below to register a new student.' }}
+            Enter marks (0–100) for each subject. Total, Percentage, Letter Grade, and GPA are calculated automatically.
           </p>
         </div>
         @if (isEditing) {
@@ -95,7 +95,7 @@
       </div>
 
       <form (ngSubmit)="submitForm()">
-        <div class="input-group">
+        <div class="student-name-row">
           <label for="student-name">Student Full Name</label>
           <input
             id="student-name"
@@ -108,24 +108,115 @@
           />
         </div>
 
-        <div class="input-group">
-          <label for="student-marks">Marks (0 – 100)</label>
-          <input
-            id="student-marks"
-            type="number"
-            placeholder="e.g. 88"
-            [(ngModel)]="marks"
-            name="marks"
-            min="0"
-            max="100"
-            step="1"
-            required
-          />
+        <div class="subjects-grid">
+          <div class="subject-input-tile">
+            <label for="subj-math">
+              <span class="subj-icon">📐</span>
+              <span>Mathematics</span>
+            </label>
+            <input
+              id="subj-math"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="math"
+              name="math"
+              placeholder="0-100"
+              required
+            />
+          </div>
+
+          <div class="subject-input-tile">
+            <label for="subj-sci">
+              <span class="subj-icon">🔬</span>
+              <span>Science</span>
+            </label>
+            <input
+              id="subj-sci"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="science"
+              name="science"
+              placeholder="0-100"
+              required
+            />
+          </div>
+
+          <div class="subject-input-tile">
+            <label for="subj-eng">
+              <span class="subj-icon">📖</span>
+              <span>English</span>
+            </label>
+            <input
+              id="subj-eng"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="english"
+              name="english"
+              placeholder="0-100"
+              required
+            />
+          </div>
+
+          <div class="subject-input-tile">
+            <label for="subj-hist">
+              <span class="subj-icon">🏛️</span>
+              <span>History</span>
+            </label>
+            <input
+              id="subj-hist"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="history"
+              name="history"
+              placeholder="0-100"
+              required
+            />
+          </div>
+
+          <div class="subject-input-tile">
+            <label for="subj-comp">
+              <span class="subj-icon">💻</span>
+              <span>Computer Sci</span>
+            </label>
+            <input
+              id="subj-comp"
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="computer"
+              name="computer"
+              placeholder="0-100"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="computation-bar">
+          <div class="comp-item">
+            <span>Total Score:</span>
+            <strong>{{ computedTotal }} <small>/ 500</small></strong>
+          </div>
+          <div class="comp-item">
+            <span>Percentage:</span>
+            <strong>{{ computedPercentage }}%</strong>
+          </div>
+          <div class="comp-item">
+            <span>Grade:</span>
+            <span class="grade-pill grade-{{ computedGrade.toLowerCase() }}">Grade {{ computedGrade }}</span>
+          </div>
+          <div class="comp-item">
+            <span>GPA:</span>
+            <strong class="gpa-highlight">{{ computedGPA | number: '1.1-1' }} <small>/ 4.0</small></strong>
+          </div>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="submit-btn">
-            {{ isEditing ? '✓ Save Changes' : '+ Add Student' }}
+            {{ isEditing ? '✓ Update Student & Grades' : '+ Enroll & Calculate GPA' }}
           </button>
           @if (isEditing) {
             <button type="button" class="cancel-btn" (click)="cancelEdit()">
@@ -139,7 +230,7 @@
     <section class="records-section">
       <div class="records-toolbar">
         <div>
-          <h2>Student Records</h2>
+          <h2>Student Academic Records</h2>
           <span class="record-count">Showing {{ filteredStudents.length }} of {{ studentService.students.length }} students</span>
         </div>
 
@@ -200,11 +291,12 @@
                 Name
                 <span class="sort-icon">{{ sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
               </th>
-              <th scope="col" class="sortable-th" (click)="toggleSort('marks')" title="Sort by Marks">
-                Marks
+              <th scope="col">Subject Scores (M / S / E / H / CS)</th>
+              <th scope="col" class="sortable-th" (click)="toggleSort('marks')" title="Sort by Percentage">
+                Score / %
                 <span class="sort-icon">{{ sortBy === 'marks' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
               </th>
-              <th scope="col">Grade</th>
+              <th scope="col">Grade &amp; GPA</th>
               <th scope="col">Status</th>
               <th scope="col" class="actions-header">Actions</th>
             </tr>
@@ -226,13 +318,27 @@
                   </div>
                 </td>
                 <td>
-                  <strong>{{ student.marks }}</strong>
-                  <span class="muted-scale"> / 100</span>
+                  <div class="subjects-mini-chips">
+                    <span class="chip" title="Mathematics">M: {{ student.subjects.math }}</span>
+                    <span class="chip" title="Science">S: {{ student.subjects.science }}</span>
+                    <span class="chip" title="English">E: {{ student.subjects.english }}</span>
+                    <span class="chip" title="History">H: {{ student.subjects.history }}</span>
+                    <span class="chip" title="Computer Science">CS: {{ student.subjects.computer }}</span>
+                  </div>
                 </td>
                 <td>
-                  <span class="grade-pill grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
-                    Grade {{ getStudentGrade(student.marks) }}
-                  </span>
+                  <strong>{{ student.marks }}%</strong>
+                  <span class="muted-scale"> ({{ student.subjects.math + student.subjects.science + student.subjects.english + student.subjects.history + student.subjects.computer }}/500)</span>
+                </td>
+                <td>
+                  <div class="grade-gpa-cell">
+                    <span class="grade-pill grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
+                      {{ getStudentGrade(student.marks) }}
+                    </span>
+                    <span class="gpa-pill">
+                      {{ getStudentGPA(student.marks) | number: '1.1-1' }} GPA
+                    </span>
+                  </div>
                 </td>
                 <td>
                   @if (isStudentPassing(student.marks)) {
@@ -272,7 +378,7 @@
               </tr>
             } @empty {
               <tr>
-                <td class="empty-records" colspan="6">
+                <td class="empty-records" colspan="7">
                   <div class="empty-content">
                     <span class="empty-glyph" aria-hidden="true">📋</span>
                     <strong>No students found</strong>
@@ -294,14 +400,14 @@
       @if (selectedStudent; as student) {
         <aside class="selected-student-drawer" aria-live="polite">
           <div class="drawer-header">
-            <span class="drawer-label">QUICK STUDENT PREVIEW</span>
+            <span class="drawer-label">ACADEMIC PERFORMANCE SUMMARY</span>
             <button type="button" class="close-drawer-btn" (click)="selectedStudent = null" aria-label="Close preview">✕</button>
           </div>
           <div class="drawer-body">
             <div class="selected-avatar" aria-hidden="true">{{ student.name.charAt(0).toUpperCase() }}</div>
             <div class="selected-info">
               <h3>{{ student.name }}</h3>
-              <p>ID #{{ student.id }} · Scored {{ student.marks }}/100 · Grade {{ getStudentGrade(student.marks) }}</p>
+              <p>ID #{{ student.id }} · {{ student.marks }}% Overall · Grade {{ getStudentGrade(student.marks) }} · {{ getStudentGPA(student.marks) | number: '1.1-1' }} GPA</p>
             </div>
             <div class="drawer-badges">
               @if (isStudentPassing(student.marks)) {
@@ -315,8 +421,31 @@
                 Edit
               </button>
               <a class="details-link" [routerLink]="['/student', student.id]">
-                Full Profile →
+                Full Subject Breakdown →
               </a>
+            </div>
+          </div>
+
+          <div class="drawer-subject-bars">
+            <div class="bar-item">
+              <span>Math: {{ student.subjects.math }}/100</span>
+              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.math"></div></div>
+            </div>
+            <div class="bar-item">
+              <span>Science: {{ student.subjects.science }}/100</span>
+              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.science"></div></div>
+            </div>
+            <div class="bar-item">
+              <span>English: {{ student.subjects.english }}/100</span>
+              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.english"></div></div>
+            </div>
+            <div class="bar-item">
+              <span>History: {{ student.subjects.history }}/100</span>
+              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.history"></div></div>
+            </div>
+            <div class="bar-item">
+              <span>Computer: {{ student.subjects.computer }}/100</span>
+              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.computer"></div></div>
             </div>
           </div>
         </aside>

@@ -182,7 +182,7 @@
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-radius: 18px;
   color: #ffffff;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
@@ -223,7 +223,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
@@ -232,6 +232,10 @@
   border-radius: 14px;
   padding: 18px 20px;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+}
+
+.gpa-stat-card strong {
+  color: #4f46e5 !important;
 }
 
 .stat-heading {
@@ -271,6 +275,80 @@
   font-size: 0.78rem;
   color: #94a3b8;
   margin-top: 4px;
+}
+
+/* --- Subject Averages Panel --- */
+.subject-averages-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+  margin-bottom: 24px;
+}
+
+.panel-tag {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.subject-avg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.subj-avg-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subj-avg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subj-avg-icon {
+  font-size: 1.1rem;
+}
+
+.subj-avg-name {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: #334155;
+  flex: 1;
+}
+
+.subj-avg-score {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Progress track */
+.progress-track {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  background: #4f46e5;
+  border-radius: inherit;
 }
 
 /* --- Panels --- */
@@ -380,17 +458,21 @@ th {
   text-decoration: underline;
 }
 
-.out-of {
-  color: #94a3b8;
-  font-size: 0.78rem;
-}
-
 .grade-badge {
   display: inline-block;
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 750;
+}
+
+.gpa-pill {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 750;
+  font-size: 0.75rem;
+  padding: 3px 7px;
+  border-radius: 6px;
 }
 
 .grade-a { background: #dcfce7; color: #15803d; }
@@ -517,20 +599,6 @@ th {
   font-size: 0.85rem;
   font-weight: 650;
   color: #334155;
-}
-
-.progress-track {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-track span {
-  display: block;
-  height: 100%;
-  background: #22c55e;
-  border-radius: inherit;
 }
 
 .progress-caption {
