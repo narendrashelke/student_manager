@@ -1,8 +1,52 @@
 {
   "students": [
-    { "id": 1, "name": "Ayush", "marks": 90 },
-    { "id": 2, "name": "John", "marks": 85 },
-    { "id": 3, "name": "Alice", "marks": 95 },
-    { "id": 4, "name": "Bob", "marks": 80 }
+    {
+      "id": 1,
+      "name": "Ayush",
+      "marks": 90,
+      "subjects": {
+        "math": 92,
+        "science": 88,
+        "english": 90,
+        "history": 86,
+        "computer": 94
+      }
+    },
+    {
+      "id": 2,
+      "name": "John",
+      "marks": 85,
+      "subjects": {
+        "math": 80,
+        "science": 85,
+        "english": 88,
+        "history": 82,
+        "computer": 90
+      }
+    },
+    {
+      "id": 3,
+      "name": "Alice",
+      "marks": 95,
+      "subjects": {
+        "math": 98,
+        "science": 96,
+        "english": 92,
+        "history": 94,
+        "computer": 95
+      }
+    },
+    {
+      "id": 4,
+      "name": "Bob",
+      "marks": 80,
+      "subjects": {
+        "math": 78,
+        "science": 82,
+        "english": 75,
+        "history": 80,
+        "computer": 85
+      }
+    }
   ]
 }

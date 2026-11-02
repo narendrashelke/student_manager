@@ -60,11 +60,15 @@ npm install
 ### Running Locally
 
 ```bash
-# Start local development server
+# 1. (Optional) Run the mock REST API backend on port 3000
+npm run server
+
+# 2. In another terminal, start the Angular development server
 npm start
 ```
 
 Navigate to `http://localhost:4200/` in your browser.
+The API server runs on `http://localhost:3000/students` watching `db.json`.
 
 ---
 

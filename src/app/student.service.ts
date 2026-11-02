@@ -13,6 +13,7 @@ import {
 } from './student.model';
 
 const STORAGE_KEY = 'campusly_students_records_v2';
+const API_URL = 'http://localhost:3000/students';
 
 const DEFAULT_STUDENTS: Student[] = [
   {
@@ -59,14 +60,44 @@ export class StudentService {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
             this.students = parsed.map((item: any) => this.normalizeStudent(item));
-            return;
           }
         }
       }
     } catch {
       // Storage read error, fall back to defaults
     }
-    this.students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
+
+    if (this.students.length === 0) {
+      this.students = JSON.parse(JSON.stringify(DEFAULT_STUDENTS));
+    }
+
+    this.syncWithServer();
+  }
+
+  private async syncWithServer(): Promise<void> {
+    try {
+      if (
+        typeof window !== 'undefined' &&
+        typeof window.fetch === 'function' &&
+        !navigator.userAgent.includes('jsdom')
+      ) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+        const response = await fetch(API_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            this.students = data.map((item: any) => this.normalizeStudent(item));
+            this.saveToStorage();
+          }
+        }
+      }
+    } catch {
+      // json-server not running or aborted, keep existing local data
+    }
   }
 
   saveToStorage(): void {
@@ -134,6 +165,19 @@ export class StudentService {
 
     this.students.push(newStudent);
     this.saveToStorage();
+
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.fetch === 'function' &&
+      !navigator.userAgent.includes('jsdom')
+    ) {
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudent),
+      }).catch(() => {});
+    }
+
     return newStudent;
   }
 
@@ -165,14 +209,28 @@ export class StudentService {
       marks = calculateAverage(subjects);
     }
 
-    this.students[index] = {
+    const updated: Student = {
       id,
       name: name.trim(),
       marks,
       subjects,
     };
 
+    this.students[index] = updated;
     this.saveToStorage();
+
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.fetch === 'function' &&
+      !navigator.userAgent.includes('jsdom')
+    ) {
+      fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+    }
+
     return true;
   }
 
@@ -182,6 +240,16 @@ export class StudentService {
     const deleted = this.students.length < initialLength;
     if (deleted) {
       this.saveToStorage();
+
+      if (
+        typeof window !== 'undefined' &&
+        typeof window.fetch === 'function' &&
+        !navigator.userAgent.includes('jsdom')
+      ) {
+        fetch(`${API_URL}/${id}`, {
+          method: 'DELETE',
+        }).catch(() => {});
+      }
     }
     return deleted;
   }
@@ -341,3 +409,4 @@ export class StudentService {
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
   }
 }
+
