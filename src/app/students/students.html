@@ -1,0 +1,326 @@
+<div class="students-page">
+  <header class="app-nav">
+    <div class="nav-content">
+      <a class="nav-brand" routerLink="/dashboard">
+        <span class="brand-badge">C</span>
+        <span>Campus<span class="brand-accent">ly</span></span>
+      </a>
+
+      <nav class="nav-links" aria-label="Top navigation">
+        <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+        <a class="nav-item" routerLink="/students" routerLinkActive="active">Students</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button type="button" class="action-btn secondary-btn" (click)="exportCsv()" title="Export students list to CSV">
+          <span>↓</span> Export CSV
+        </button>
+        <button type="button" class="action-btn text-btn" (click)="resetDemoData()" title="Reset to initial 4 students">
+          ↺ Reset Demo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="student-container">
+    @if (alertMessage) {
+      <div class="alert-banner" [class]="'alert-' + alertType" role="status">
+        <span class="alert-icon">
+          @if (alertType === 'success') { ✓ }
+          @else if (alertType === 'warning') { ⚠ }
+          @else { ℹ }
+        </span>
+        <span class="alert-text">{{ alertMessage }}</span>
+        <button type="button" class="alert-dismiss" (click)="alertMessage = null" aria-label="Dismiss alert">✕</button>
+      </div>
+    }
+
+    <header class="student-header">
+      <div class="header-titles">
+        <span class="eyebrow">ROSTER &amp; ACADEMICS</span>
+        <h1>Student Management</h1>
+        <p>Manage enrolled students, assign grades, track academic results, and maintain records.</p>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Student performance summary">
+      <article class="summary-card">
+        <span class="card-label">Total Enrolled</span>
+        <strong>{{ studentService.students.length }}</strong>
+        <span class="card-caption">Students in class</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="card-label">Class Average</span>
+        <strong>
+          @if (studentService.students.length > 0) {
+            {{ studentService.getAverage() | number: '1.1-1' }}<small>/100</small>
+          } @else {
+            —
+          }
+        </strong>
+        <span class="card-caption">Overall benchmark</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="card-label">Highest Score</span>
+        <strong>
+          @if (studentService.students.length > 0) {
+            {{ studentService.getHighestMarks() }}<small> pts</small>
+          } @else {
+            —
+          }
+        </strong>
+        <span class="card-caption">Top performer score</span>
+      </article>
+
+      <article class="summary-card">
+        <span class="card-label">Pass Rate</span>
+        <strong>{{ studentService.getPassRate() }}<small>%</small></strong>
+        <span class="card-caption">{{ studentService.getPassingCount() }} of {{ studentService.students.length }} passed</span>
+      </article>
+    </section>
+
+    <section class="form-section" [class.editing-active]="isEditing">
+      <div class="form-header">
+        <div>
+          <h2>{{ isEditing ? 'Edit Student Record' : 'Add New Student' }}</h2>
+          <p class="form-subtitle">
+            {{ isEditing ? 'Update student information and save changes.' : 'Enter details below to register a new student.' }}
+          </p>
+        </div>
+        @if (isEditing) {
+          <span class="editing-tag">Editing ID #{{ editingStudentId }}</span>
+        }
+      </div>
+
+      <form (ngSubmit)="submitForm()">
+        <div class="input-group">
+          <label for="student-name">Student Full Name</label>
+          <input
+            id="student-name"
+            type="text"
+            placeholder="e.g. Maya Patel"
+            [(ngModel)]="name"
+            name="name"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="student-marks">Marks (0 – 100)</label>
+          <input
+            id="student-marks"
+            type="number"
+            placeholder="e.g. 88"
+            [(ngModel)]="marks"
+            name="marks"
+            min="0"
+            max="100"
+            step="1"
+            required
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="submit-btn">
+            {{ isEditing ? '✓ Save Changes' : '+ Add Student' }}
+          </button>
+          @if (isEditing) {
+            <button type="button" class="cancel-btn" (click)="cancelEdit()">
+              Cancel
+            </button>
+          }
+        </div>
+      </form>
+    </section>
+
+    <section class="records-section">
+      <div class="records-toolbar">
+        <div>
+          <h2>Student Records</h2>
+          <span class="record-count">Showing {{ filteredStudents.length }} of {{ studentService.students.length }} students</span>
+        </div>
+
+        <div class="toolbar-controls">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input
+              class="search-input"
+              type="text"
+              name="search"
+              [(ngModel)]="searchText"
+              placeholder="Search by name or ID..."
+              aria-label="Search students"
+            />
+            @if (searchText) {
+              <button type="button" class="clear-search-btn" (click)="searchText = ''" aria-label="Clear search">✕</button>
+            }
+          </div>
+
+          <div class="filter-pills" role="radiogroup" aria-label="Filter by result">
+            <button
+              type="button"
+              class="pill-btn"
+              [class.active]="statusFilter === 'all'"
+              (click)="statusFilter = 'all'"
+            >
+              All ({{ studentService.students.length }})
+            </button>
+            <button
+              type="button"
+              class="pill-btn"
+              [class.active]="statusFilter === 'pass'"
+              (click)="statusFilter = 'pass'"
+            >
+              Passed ({{ studentService.getPassingCount() }})
+            </button>
+            <button
+              type="button"
+              class="pill-btn"
+              [class.active]="statusFilter === 'fail'"
+              (click)="statusFilter = 'fail'"
+            >
+              Needs Support ({{ studentService.students.length - studentService.getPassingCount() }})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" class="sortable-th" (click)="toggleSort('id')" title="Sort by ID">
+                ID
+                <span class="sort-icon">{{ sortBy === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+              </th>
+              <th scope="col" class="sortable-th" (click)="toggleSort('name')" title="Sort by Name">
+                Name
+                <span class="sort-icon">{{ sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+              </th>
+              <th scope="col" class="sortable-th" (click)="toggleSort('marks')" title="Sort by Marks">
+                Marks
+                <span class="sort-icon">{{ sortBy === 'marks' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+              </th>
+              <th scope="col">Grade</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="actions-header">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (student of filteredStudents; track student.id) {
+              <tr [class.row-selected]="selectedStudent?.id === student.id" [class.row-editing]="editingStudentId === student.id">
+                <td>
+                  <a class="student-id-link" [routerLink]="['/student', student.id]" title="View full details">
+                    #{{ student.id }}
+                  </a>
+                </td>
+                <td>
+                  <div class="student-cell">
+                    <span class="table-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
+                    <a class="student-name-link" [routerLink]="['/student', student.id]" title="View full details">
+                      {{ student.name }}
+                    </a>
+                  </div>
+                </td>
+                <td>
+                  <strong>{{ student.marks }}</strong>
+                  <span class="muted-scale"> / 100</span>
+                </td>
+                <td>
+                  <span class="grade-pill grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
+                    Grade {{ getStudentGrade(student.marks) }}
+                  </span>
+                </td>
+                <td>
+                  @if (isStudentPassing(student.marks)) {
+                    <span class="status-badge pass">Passed</span>
+                  } @else {
+                    <span class="status-badge fail">Needs Support</span>
+                  }
+                </td>
+                <td class="actions-cell">
+                  <button
+                    type="button"
+                    class="btn-icon select-btn"
+                    [class.active]="selectedStudent?.id === student.id"
+                    (click)="selectStudent(student)"
+                    title="Quick preview"
+                  >
+                    {{ selectedStudent?.id === student.id ? 'Hide' : 'View' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon edit-btn"
+                    (click)="startEdit(student)"
+                    title="Edit student"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon delete-btn"
+                    [class.confirming]="confirmingDeleteId === student.id"
+                    (click)="requestDelete(student.id)"
+                    [title]="confirmingDeleteId === student.id ? 'Click again to confirm delete' : 'Delete student'"
+                  >
+                    {{ confirmingDeleteId === student.id ? 'Confirm?' : 'Delete' }}
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-records" colspan="6">
+                  <div class="empty-content">
+                    <span class="empty-glyph" aria-hidden="true">📋</span>
+                    <strong>No students found</strong>
+                    <p>
+                      @if (searchText.trim()) {
+                        No records match "{{ searchText }}". Try clearing the search or filters.
+                      } @else {
+                        No student records enrolled yet. Use the form above to add a student!
+                      }
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (selectedStudent; as student) {
+        <aside class="selected-student-drawer" aria-live="polite">
+          <div class="drawer-header">
+            <span class="drawer-label">QUICK STUDENT PREVIEW</span>
+            <button type="button" class="close-drawer-btn" (click)="selectedStudent = null" aria-label="Close preview">✕</button>
+          </div>
+          <div class="drawer-body">
+            <div class="selected-avatar" aria-hidden="true">{{ student.name.charAt(0).toUpperCase() }}</div>
+            <div class="selected-info">
+              <h3>{{ student.name }}</h3>
+              <p>ID #{{ student.id }} · Scored {{ student.marks }}/100 · Grade {{ getStudentGrade(student.marks) }}</p>
+            </div>
+            <div class="drawer-badges">
+              @if (isStudentPassing(student.marks)) {
+                <span class="status-badge pass">Passed</span>
+              } @else {
+                <span class="status-badge fail">Needs Support</span>
+              }
+            </div>
+            <div class="drawer-actions">
+              <button type="button" class="btn-icon edit-btn" (click)="startEdit(student)">
+                Edit
+              </button>
+              <a class="details-link" [routerLink]="['/student', student.id]">
+                Full Profile →
+              </a>
+            </div>
+          </div>
+        </aside>
+      }
+    </section>
+  </main>
+</div>

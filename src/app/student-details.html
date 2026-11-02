@@ -1,0 +1,177 @@
+<main class="details-page">
+  <header class="page-header">
+    <div class="header-nav">
+      <a class="back-link" routerLink="/students">
+        <span aria-hidden="true">←</span> Back to students
+      </a>
+      <span class="nav-divider">/</span>
+      <a class="dash-link" routerLink="/dashboard">Dashboard</a>
+    </div>
+
+    @if (student) {
+      <div class="paging-nav">
+        @if (prevStudentId !== null) {
+          <a class="paging-btn" [routerLink]="['/student', prevStudentId]" title="Previous student">
+            ← Prev
+          </a>
+        }
+        @if (nextStudentId !== null) {
+          <a class="paging-btn" [routerLink]="['/student', nextStudentId]" title="Next student">
+            Next →
+          </a>
+        }
+      </div>
+    }
+  </header>
+
+  @if (feedbackMessage) {
+    <div class="feedback-toast" role="status">
+      <span>✓</span> {{ feedbackMessage }}
+    </div>
+  }
+
+  @if (student; as currentStudent) {
+    <section class="profile-card" aria-labelledby="student-name">
+      <div class="profile-banner">
+        <div class="banner-tag">STUDENT ACADEMIC PROFILE</div>
+        <div class="banner-actions">
+          @if (!isEditing) {
+            <button type="button" class="action-btn edit-btn" (click)="startEdit()">
+              ✎ Edit Student
+            </button>
+            <button
+              type="button"
+              class="action-btn delete-btn"
+              [class.confirming]="confirmingDelete"
+              (click)="requestDelete()"
+            >
+              {{ confirmingDelete ? '⚠ Confirm Delete?' : '🗑 Delete' }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="profile-content">
+        @if (!isEditing) {
+          <div class="identity">
+            <div class="avatar" aria-hidden="true">{{ currentStudent.name.charAt(0).toUpperCase() }}</div>
+            <div class="identity-copy">
+              <h1 id="student-name">{{ currentStudent.name }}</h1>
+              <span class="student-id">Student ID <strong>#{{ currentStudent.id }}</strong></span>
+            </div>
+            @if (isPassing) {
+              <span class="result-badge passed">Passing</span>
+            } @else {
+              <span class="result-badge needs-work">Needs Support</span>
+            }
+          </div>
+
+          <div class="details-grid">
+            <article class="detail-tile">
+              <span class="detail-label">MARKS</span>
+              <strong class="marks-value">{{ currentStudent.marks }}<small> / 100</small></strong>
+              <div
+                class="progress-track"
+                role="progressbar"
+                [attr.aria-valuenow]="currentStudent.marks"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-label]="'Marks: ' + currentStudent.marks + ' out of 100'"
+              >
+                <span
+                  class="progress-fill"
+                  [class.fill-pass]="isPassing"
+                  [class.fill-fail]="!isPassing"
+                  [style.width.%]="currentStudent.marks"
+                ></span>
+              </div>
+            </article>
+
+            <article class="detail-tile">
+              <span class="detail-label">GRADE</span>
+              <strong class="grade-value grade-{{ grade.toLowerCase() }}">Grade {{ grade }}</strong>
+              <span class="detail-subtext">Evaluation standard</span>
+            </article>
+
+            <article class="detail-tile">
+              <span class="detail-label">CLASS RANK</span>
+              <strong class="rank-value">#{{ rank }} <small>of {{ studentService.students.length }}</small></strong>
+              <span class="detail-subtext">
+                @if (diffFromAverage >= 0) {
+                  +{{ diffFromAverage }} pts vs class average
+                } @else {
+                  {{ diffFromAverage }} pts vs class average
+                }
+              </span>
+            </article>
+
+            <article class="detail-tile result-tile">
+              <span class="detail-label">RESULT STATUS</span>
+              @if (isPassing) {
+                <strong class="result-text passed-text">Passed</strong>
+                <span class="result-note">Meets the 40-mark minimum threshold</span>
+              } @else {
+                <strong class="result-text support-text">Needs Academic Support</strong>
+                <span class="result-note">Below the 40-mark passing benchmark</span>
+              }
+            </article>
+          </div>
+        } @else {
+          <div class="edit-mode-container">
+            <h2>Edit Student #{{ currentStudent.id }}</h2>
+            <form (ngSubmit)="saveEdit()" class="edit-form">
+              <div class="form-group">
+                <label for="edit-name">Student Full Name</label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  [(ngModel)]="editName"
+                  name="editName"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="edit-marks">Marks (0 – 100)</label>
+                <input
+                  id="edit-marks"
+                  type="number"
+                  [(ngModel)]="editMarks"
+                  name="editMarks"
+                  min="0"
+                  max="100"
+                  step="1"
+                  required
+                />
+              </div>
+
+              <div class="edit-actions">
+                <button type="submit" class="save-btn">✓ Save Changes</button>
+                <button type="button" class="cancel-btn" (click)="cancelEdit()">Cancel</button>
+              </div>
+            </form>
+          </div>
+        }
+
+        <footer class="profile-footer">
+          <div class="academic-note">
+            <span>Academic record for session 2026</span>
+          </div>
+          <div class="footer-links">
+            <a routerLink="/students">Return to student roster →</a>
+          </div>
+        </footer>
+      </div>
+    </section>
+  } @else {
+    <section class="not-found" role="status">
+      <span class="not-found-icon" aria-hidden="true">?</span>
+      <h1>Student Not Found</h1>
+      <p>There is no student record matching this ID. It may have been removed or never created.</p>
+      <div class="not-found-actions">
+        <a class="back-button" routerLink="/students">View Student Roster</a>
+        <a class="dashboard-button" routerLink="/dashboard">Go to Dashboard</a>
+      </div>
+    </section>
+  }
+</main>

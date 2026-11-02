@@ -1,0 +1,273 @@
+<div class="dashboard-shell">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard" aria-label="Campus home">
+      <span class="brand-mark">C</span>
+      <span>Campus<span class="brand-light">ly</span></span>
+    </a>
+
+    <span class="nav-label">WORKSPACE</span>
+    <nav aria-label="Main navigation">
+      <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="nav-icon">▦</span>
+        Dashboard
+      </a>
+      <a class="nav-link" routerLink="/students" routerLinkActive="active">
+        <span class="nav-icon">♙</span>
+        Students
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="school-avatar">SC</div>
+      <div>
+        <strong>School Admin</strong>
+        <span>Administrator</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">ACADEMIC OVERVIEW</span>
+        <h1>Dashboard</h1>
+      </div>
+      <a class="primary-button" routerLink="/students">
+        <span aria-hidden="true">+</span>
+        Manage Students
+      </a>
+    </header>
+
+    <section class="welcome-banner" aria-labelledby="welcome-title">
+      <div class="welcome-copy">
+        <span class="welcome-kicker">YOUR CLASS AT A GLANCE</span>
+        <h2 id="welcome-title">Welcome back, Admin</h2>
+        <p>Monitor student performance, manage grades, and review class benchmarks.</p>
+        <a routerLink="/students">Open student roster <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="welcome-art" aria-hidden="true">
+        <span class="art-sun"></span>
+        <span class="art-book art-book-one"></span>
+        <span class="art-book art-book-two"></span>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Class statistics">
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Total Students</span>
+          <span class="stat-icon students-icon" aria-hidden="true">♙</span>
+        </div>
+        <strong>{{ studentService.students.length }}</strong>
+        <span class="stat-caption">Enrolled in class</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Class Average</span>
+          <span class="stat-icon average-icon" aria-hidden="true">↗</span>
+        </div>
+        <strong>{{ averageMarks | number: '1.1-1' }}<small>/100</small></strong>
+        <span class="stat-caption">Mean score across class</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Passing Students</span>
+          <span class="stat-icon passing-icon" aria-hidden="true">✓</span>
+        </div>
+        <strong>{{ passingStudents }}</strong>
+        <span class="stat-caption">Scored 40+ marks</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Pass Rate</span>
+          <span class="stat-icon rate-icon" aria-hidden="true">%</span>
+        </div>
+        <strong>{{ passRate }}<small>%</small></strong>
+        <span class="stat-caption">Percentage passing</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Highest Score</span>
+          <span class="stat-icon trophy-icon" aria-hidden="true">★</span>
+        </div>
+        <strong>
+          @if (studentService.students.length > 0) {
+            {{ highestMarks }}<small> pts</small>
+          } @else {
+            —
+          }
+        </strong>
+        <span class="stat-caption">Class high score</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Lowest Score</span>
+          <span class="stat-icon lowest-icon" aria-hidden="true">▼</span>
+        </div>
+        <strong>
+          @if (studentService.students.length > 0) {
+            {{ lowestMarks }}<small> pts</small>
+          } @else {
+            —
+          }
+        </strong>
+        <span class="stat-caption">Class low score</span>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="panel recent-panel">
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">CLASS ROSTER</span>
+            <h2>Recent Students</h2>
+          </div>
+          <a class="text-link" routerLink="/students">View all ({{ studentService.students.length }}) <span aria-hidden="true">→</span></a>
+        </div>
+
+        @if (recentStudents.length > 0) {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Student</th>
+                  <th scope="col">Student ID</th>
+                  <th scope="col">Marks</th>
+                  <th scope="col">Grade</th>
+                  <th scope="col">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of recentStudents; track student.id) {
+                  <tr>
+                    <td>
+                      <div class="student-name">
+                        <span class="student-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
+                        <a class="student-name-link" [routerLink]="['/student', student.id]">{{ student.name }}</a>
+                      </div>
+                    </td>
+                    <td class="muted-cell">
+                      <a class="student-id-link" [routerLink]="['/student', student.id]">#{{ student.id }}</a>
+                    </td>
+                    <td>
+                      <strong>{{ student.marks }}</strong>
+                      <span class="out-of"> / 100</span>
+                    </td>
+                    <td>
+                      <span class="grade-badge grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
+                        {{ getStudentGrade(student.marks) }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (isStudentPassing(student.marks)) {
+                        <span class="status-badge passed">Passed</span>
+                      } @else {
+                        <span class="status-badge needs-work">Needs Support</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">♙</span>
+            <strong>No students yet</strong>
+            <p>Add your first student to see class activity here.</p>
+            <a class="primary-button" routerLink="/students">Add a student</a>
+          </div>
+        }
+      </article>
+
+      <div class="side-insights">
+        <article class="panel performance-panel">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">HONOR ROLL</span>
+              <h2>Top Performers</h2>
+            </div>
+            <span class="trophy" aria-hidden="true">★</span>
+          </div>
+
+          @if (topStudents.length > 0) {
+            <ol class="performer-list">
+              @for (student of topStudents; track student.id; let position = $index) {
+                <li>
+                  <span class="rank">{{ position + 1 }}</span>
+                  <span class="performer-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
+                  <div class="performer-info">
+                    <a class="performer-name" [routerLink]="['/student', student.id]">{{ student.name }}</a>
+                    <span class="performer-grade">Grade {{ getStudentGrade(student.marks) }}</span>
+                  </div>
+                  <strong class="performer-score">{{ student.marks }}<small> pts</small></strong>
+                </li>
+              }
+            </ol>
+          } @else {
+            <div class="empty-insight">Student performance will appear here once records are added.</div>
+          }
+
+          <div class="pass-rate-summary">
+            <div>
+              <span>Class pass rate</span>
+              <strong>{{ passRate }}%</strong>
+            </div>
+            <div
+              class="progress-track"
+              role="progressbar"
+              [attr.aria-valuenow]="passRate"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-label="Class pass rate"
+            >
+              <span [style.width.%]="passRate"></span>
+            </div>
+            <span class="progress-caption">{{ passingStudents }} of {{ studentService.students.length }} students passing</span>
+          </div>
+        </article>
+
+        <article class="panel grade-distribution-panel">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">ANALYSIS</span>
+              <h2>Grade Distribution</h2>
+            </div>
+          </div>
+
+          <div class="grade-distribution-grid">
+            <div class="grade-tile">
+              <span class="grade-pill grade-a">A (90-100)</span>
+              <strong>{{ gradeDistribution.A }}</strong>
+            </div>
+            <div class="grade-tile">
+              <span class="grade-pill grade-b">B (80-89)</span>
+              <strong>{{ gradeDistribution.B }}</strong>
+            </div>
+            <div class="grade-tile">
+              <span class="grade-pill grade-c">C (70-79)</span>
+              <strong>{{ gradeDistribution.C }}</strong>
+            </div>
+            <div class="grade-tile">
+              <span class="grade-pill grade-d">D (60-69)</span>
+              <strong>{{ gradeDistribution.D }}</strong>
+            </div>
+            <div class="grade-tile">
+              <span class="grade-pill grade-e">E (40-59)</span>
+              <strong>{{ gradeDistribution.E }}</strong>
+            </div>
+            <div class="grade-tile">
+              <span class="grade-pill grade-f">F (&lt;40)</span>
+              <strong>{{ gradeDistribution.F }}</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
