@@ -1,59 +1,86 @@
-# StudentManager
+# Campusly — Student Management System
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.4.
+A modern, responsive **Student Management System** built with **Angular (Standalone Components)**, TypeScript, and modern CSS.
 
-## Development server
+🔗 **GitHub Repository:** [https://github.com/narendrashelke/student_manager](https://github.com/narendrashelke/student_manager)
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
-```
+## 🌟 Key Features
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### 1. Complete CRUD Operations
+- **Create:** Add new students with strict input validation (name and marks between 0–100).
+- **Read:**
+  - **Overview Dashboard:** Class metrics, honor roll, and recent student activity.
+  - **Student Roster:** Search by name/ID, filter by status (All / Passed / Needs Support), and sortable columns (ID, Name, Marks).
+  - **Student Profile:** Dedicated profile page (`/student/:id`) showing grade, class rank, and performance vs. class average.
+- **Update:** Edit any student's name and marks directly from the roster table or profile view.
+- **Delete:** Safe two-step inline confirmation (`Delete` → `Confirm?`) to prevent accidental deletion.
 
-## Code scaffolding
+### 2. Academic Analytics & Grading
+- Automated letter grade computation:
+  - **Grade A:** 90 – 100
+  - **Grade B:** 80 – 89
+  - **Grade C:** 70 – 79
+  - **Grade D:** 60 – 69
+  - **Grade E:** 40 – 59
+  - **Grade F:** < 40 (Needs Academic Support)
+- **Grade Distribution Breakdown:** Visual distribution summary of all letter grades in the class.
+- **Class Benchmarks:** Dynamic computation of class average, highest score, lowest score, and pass rate.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### 3. Data Persistence & Export
+- **LocalStorage Persistence:** All additions, modifications, and deletions persist across page refreshes and browser restarts.
+- **CSV Export:** One-click download of the complete student roster to CSV format.
+- **Reset Demo Data:** Quick reset to default demo records whenever needed.
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🚀 Getting Started
 
-```bash
-ng generate --help
-```
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [npm](https://www.npmjs.com/)
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### Installation
 
 ```bash
-ng e2e
+# Clone the repository
+git clone https://github.com/narendrashelke/student_manager.git
+
+# Navigate into the project folder
+cd student_manager
+
+# Install dependencies
+npm install
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+### Running Locally
 
-## Additional Resources
+```bash
+# Start local development server
+npm start
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Navigate to `http://localhost:4200/` in your browser.
+
+---
+
+## 🧪 Testing & Build
+
+```bash
+# Run unit tests with Vitest (29 passing tests across 5 test suites)
+npm test
+
+# Build optimized production bundle
+npm run build
+```
+
+---
+
+## 🛠 Tech Stack
+
+- **Framework:** Angular (Standalone Architecture)
+- **Language:** TypeScript
+- **Testing:** Vitest
+- **Tooling:** Angular CLI, Vite
+- **Styling:** CSS3 (Modern variables, Flexbox & CSS Grid, responsive design)
