@@ -5,6 +5,8 @@ import {
   calculateGPA,
   calculateTotalMarks,
   calculateAverage,
+  calculateAttendancePercentage,
+  isLowAttendance,
 } from './student.model';
 import { StudentService } from './student.service';
 
@@ -148,5 +150,112 @@ describe('StudentService', () => {
     const subjects = { math: 90, science: 80, english: 70, history: 60, computer: 100 };
     expect(calculateTotalMarks(subjects)).toBe(400);
     expect(calculateAverage(subjects)).toBe(80);
+  });
+
+  it('should calculate attendance percentage and detect low attendance (<75%)', () => {
+    // 3 present (3.0) + 1 late (0.5) + 1 excused (ignored) + 1 absent (0.0)
+    // attended = 3.5, countable = 5 -> (3.5 / 5) * 100 = 70.0%
+    const records = [
+      { date: '2026-11-01', status: 'present' as const },
+      { date: '2026-11-02', status: 'present' as const },
+      { date: '2026-11-03', status: 'present' as const },
+      { date: '2026-11-04', status: 'late' as const },
+      { date: '2026-11-05', status: 'excused' as const },
+      { date: '2026-11-06', status: 'absent' as const },
+    ];
+    expect(calculateAttendancePercentage(records)).toBe(70);
+    expect(isLowAttendance(records)).toBe(true);
+
+    // 4 present, 1 late -> attended = 4.5, countable = 5 -> 90% (not low)
+    const goodRecords = [
+      { date: '2026-11-01', status: 'present' as const },
+      { date: '2026-11-02', status: 'present' as const },
+      { date: '2026-11-03', status: 'present' as const },
+      { date: '2026-11-04', status: 'present' as const },
+      { date: '2026-11-05', status: 'late' as const },
+    ];
+    expect(calculateAttendancePercentage(goodRecords)).toBe(90);
+    expect(isLowAttendance(goodRecords)).toBe(false);
+
+    // Empty records default to 100% and not low attendance
+    expect(calculateAttendancePercentage([])).toBe(100);
+    expect(isLowAttendance([])).toBe(false);
+  });
+
+  it('should delete multiple students at once', () => {
+    const initialCount = service.students.length;
+    const deletedCount = service.deleteMultipleStudents([1, 2]);
+    expect(deletedCount).toBe(2);
+    expect(service.students.length).toBe(initialCount - 2);
+    expect(service.getStudentById(1)).toBeUndefined();
+    expect(service.getStudentById(2)).toBeUndefined();
+
+    // Calling with non-existent IDs returns 0
+    expect(service.deleteMultipleStudents([999, 1000])).toBe(0);
+  });
+
+  it('should apply grace marks to multiple students and cap at 100', () => {
+    // Student 1 (Ayush): marks ~90
+    // Student 4 (Bob): marks 80
+    service.applyGraceMarks([1, 4], 5);
+
+    const s4 = service.getStudentById(4);
+    expect(s4?.marks).toBe(85); // 80 + 5
+    expect(s4?.subjects.math).toBe(83); // 78 + 5
+
+    // Add extra 50 marks -> should cap at 100
+    service.applyGraceMarks([4], 50);
+    const s4Capped = service.getStudentById(4);
+    expect(s4Capped?.marks).toBe(100);
+    expect(s4Capped?.subjects.math).toBe(100);
+  });
+
+  it('should assign a class/section to multiple students', () => {
+    service.assignClassToMultiple([1, 2], '10-C');
+    expect(service.getStudentById(1)?.className).toBe('10-C');
+    expect(service.getStudentById(2)?.className).toBe('10-C');
+  });
+
+  it('should mark bulk attendance and record daily register status', () => {
+    service.markBulkAttendance([1, 2, 3], '2026-11-05', 'late');
+
+    const s1 = service.getStudentById(1);
+    const s1Record = s1?.attendanceRecords?.find((r) => r.date === '2026-11-05');
+    expect(s1Record?.status).toBe('late');
+
+    // Updating existing date replaces it rather than duplicating
+    service.markAttendance('2026-11-05', [{ studentId: 1, status: 'present' }]);
+    const records = service.getStudentById(1)?.attendanceRecords?.filter((r) => r.date === '2026-11-05');
+    expect(records?.length).toBe(1);
+    expect(records?.[0].status).toBe('present');
+  });
+
+  it('should generate CSV template and import students correctly', () => {
+    const template = service.generateCsvTemplate();
+    expect(template).toContain('Name,Class,Email,Phone,Gender');
+    expect(template).toContain('Math,Science,English,History,Computer');
+
+    const validCsv = `Name,Class,Email,Phone,Gender,DateOfBirth,ParentName,ParentPhone,Math,Science,English,History,Computer
+"Import Student A","10-A","import.a@school.edu","999-000-1111","Male","2008-04-12","Parent A","999-000-2222",85,90,75,80,95
+"Import Student B","10-B","import.b@school.edu","999-000-3333","Female","2008-05-14","Parent B","999-000-4444",70,72,68,74,80`;
+
+    const result = service.importStudentsFromCsv(validCsv);
+    expect(result.successCount).toBe(2);
+    expect(result.errors.length).toBe(0);
+
+    const imported = service.students.find((s) => s.name === 'Import Student A');
+    expect(imported).toBeDefined();
+    expect(imported?.className).toBe('10-A');
+    expect(imported?.email).toBe('import.a@school.edu');
+    expect(imported?.subjects.math).toBe(85);
+  });
+
+  it('should report validation errors when importing invalid CSV rows', () => {
+    const badCsv = `Name,Class,Gender,Email,Phone,ParentName,ParentPhone,Math,Science,English,History,Computer
+"","10-A","Other","invalid-email","123","Parent","123",150,90,75,80,95`;
+
+    const result = service.importStudentsFromCsv(badCsv);
+    expect(result.successCount).toBe(0);
+    expect(result.errors.length).toBeGreaterThan(0);
   });
 });

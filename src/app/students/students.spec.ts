@@ -104,4 +104,87 @@ describe('Students', () => {
     expect(updated?.name).toBe('Updated Name');
     expect(updated?.marks).toBe(99);
   });
+
+  it('should toggle multi-selection and select all / clear all', () => {
+    expect(component.selectedStudentIds.size).toBe(0);
+    expect(component.isAllSelected).toBe(false);
+
+    // Toggle single student
+    component.toggleSelectStudent(1);
+    expect(component.selectedStudentIds.has(1)).toBe(true);
+    expect(component.selectedStudentIds.size).toBe(1);
+
+    // Toggle select all
+    component.toggleSelectAll();
+    expect(component.isAllSelected).toBe(true);
+    expect(component.selectedStudentIds.size).toBe(component.filteredStudents.length);
+
+    // Clear selection
+    component.clearSelection();
+    expect(component.selectedStudentIds.size).toBe(0);
+  });
+
+  it('should execute bulk actions (grace marks, assign class, and bulk delete)', () => {
+    // Select students 1 and 2
+    component.toggleSelectStudent(1);
+    component.toggleSelectStudent(2);
+    expect(component.selectedStudentIds.size).toBe(2);
+
+    // Bulk grace marks
+    component.bulkGraceMarks = 5;
+    component.executeBulkGraceMarks();
+    expect(component.alertMessage).toContain('grace marks');
+
+    // Bulk assign class
+    component.bulkTargetClass = '10-C';
+    component.executeBulkAssignClass();
+    expect(component.studentService.getStudentById(1)?.className).toBe('10-C');
+    expect(component.studentService.getStudentById(2)?.className).toBe('10-C');
+
+    // Bulk delete
+    component.executeBulkDelete();
+    expect(component.selectedStudentIds.size).toBe(0);
+    expect(component.studentService.getStudentById(1)).toBeUndefined();
+    expect(component.studentService.getStudentById(2)).toBeUndefined();
+  });
+
+  it('should switch between roster and attendance view tabs', () => {
+    expect(component.activeTab).toBe('roster');
+    component.activeTab = 'attendance';
+    component.initAttendanceDraft();
+    expect(component.activeTab).toBe('attendance');
+    expect(Object.keys(component.attendanceDraft).length).toBeGreaterThan(0);
+
+    // Set attendance draft for student 3
+    component.setStudentAttendanceDraft(3, 'absent');
+    expect(component.attendanceDraft[3]).toBe('absent');
+
+    // Quick mark all present
+    component.markAllDraftPresent();
+    expect(component.attendanceDraft[3]).toBe('present');
+
+    // Save attendance register
+    component.saveAttendanceRegister();
+    expect(component.alertMessage).toContain('saved successfully');
+    const rec = component.studentService.getStudentById(3)?.attendanceRecords?.find((r) => r.date === component.attendanceDate);
+    expect(rec?.status).toBe('present');
+  });
+
+  it('should manage CSV import modal and process file uploads', () => {
+    expect(component.showImportModal).toBe(false);
+    component.openImportModal();
+    expect(component.showImportModal).toBe(true);
+
+    const validCsv = `Name,Class,Gender,Email,Phone,ParentName,ParentPhone,Math,Science,English,History,Computer
+"Modal Import Student","10-A","Female","modal@school.edu","555-010-0101","Parent M","555-010-0102",88,90,92,85,91`;
+
+    component.importCsvText = validCsv;
+    component.executeCsvImport();
+    expect(component.importSuccessCount).toBe(1);
+    expect(component.importErrors.length).toBe(0);
+
+    // Verify modal can close
+    component.closeImportModal();
+    expect(component.showImportModal).toBe(false);
+  });
 });

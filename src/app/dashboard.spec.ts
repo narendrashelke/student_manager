@@ -50,4 +50,14 @@ describe('Dashboard', () => {
     expect(dist).toBeDefined();
     expect(dist.A).toBeGreaterThanOrEqual(1);
   });
+
+  it('should compute overall attendance rate and identify low attendance students', () => {
+    expect(component.attendanceRate).toBeGreaterThan(0);
+    expect(component.attendanceRate).toBeLessThanOrEqual(100);
+
+    const lowAtt = component.lowAttendanceStudents;
+    expect(Array.isArray(lowAtt)).toBe(true);
+    // Student 4 Bob has 50% attendance in defaults (< 75%)
+    expect(lowAtt.some((s) => s.name === 'Bob')).toBe(true);
+  });
 });

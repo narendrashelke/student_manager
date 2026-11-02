@@ -1,3 +1,18 @@
+export type Gender = 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+
+export interface AttendanceRecord {
+  date: string; // YYYY-MM-DD
+  status: AttendanceStatus;
+}
+
+export interface ParentContact {
+  name?: string;
+  phone?: string;
+  relationship?: string;
+}
+
 export interface SubjectMarks {
   math: number;
   science: number;
@@ -23,11 +38,29 @@ export const SUBJECTS: SubjectConfig[] = [
   { key: 'computer', label: 'Computer Science', icon: '💻', maxMarks: 100 },
 ];
 
+export const AVAILABLE_AVATARS: string[] = [
+  '👨‍🎓', '👩‍🎓', '🧑‍🎓', '👨‍💻', '👩‍💻', '🧑‍🔬', '👨‍🎨', '👩‍🏫', '🚀', '⭐', '🦁', '🦉'
+];
+
+export const AVAILABLE_CLASSES: string[] = ['10-A', '10-B', '11-A', '11-B', '12-A'];
+
 export interface Student {
   id: number;
   name: string;
   marks: number; // overall percentage (0-100)
   subjects: SubjectMarks;
+
+  // Rich Profile fields
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string; // YYYY-MM-DD
+  gender?: Gender;
+  className?: string; // e.g. "10-A"
+  parentContact?: ParentContact;
+  avatarUrl?: string; // emoji icon or image URL
+
+  // Attendance Module
+  attendanceRecords?: AttendanceRecord[];
 }
 
 export type GradeLevel = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
@@ -77,4 +110,36 @@ export function createDefaultSubjects(baseScore = 80): SubjectMarks {
     history: safeBase,
     computer: safeBase,
   };
+}
+
+export function calculateAttendancePercentage(records: AttendanceRecord[] = []): number {
+  if (!records || records.length === 0) {
+    return 100.0;
+  }
+
+  let attended = 0;
+  let countable = 0;
+
+  for (const r of records) {
+    if (r.status === 'present') {
+      attended += 1;
+      countable += 1;
+    } else if (r.status === 'late') {
+      attended += 0.5;
+      countable += 1;
+    } else if (r.status === 'absent') {
+      countable += 1;
+    }
+    // 'excused' does not count against total countable sessions
+  }
+
+  if (countable === 0) {
+    return 100.0;
+  }
+
+  return Math.round((attended / countable) * 1000) / 10;
+}
+
+export function isLowAttendance(records: AttendanceRecord[] = []): boolean {
+  return calculateAttendancePercentage(records) < 75.0;
 }

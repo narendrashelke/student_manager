@@ -8,10 +8,15 @@ import {
   calculateGPA,
   calculateTotalMarks,
   calculateAverage,
+  calculateAttendancePercentage,
+  isLowAttendance,
   Student,
   SubjectMarks,
   SUBJECTS,
-  SubjectConfig,
+  AVAILABLE_AVATARS,
+  AVAILABLE_CLASSES,
+  AttendanceRecord,
+  Gender,
 } from './student.model';
 import { StudentService } from './student.service';
 
@@ -28,11 +33,24 @@ export class StudentDetails {
   readonly studentService = inject(StudentService);
 
   readonly subjectsConfig = SUBJECTS;
+  readonly avatarsList = AVAILABLE_AVATARS;
+  readonly classesList = AVAILABLE_CLASSES;
 
   isEditing = false;
   confirmingDelete = false;
 
+  // Edit fields
   editName = '';
+  editClass = '10-A';
+  editEmail = '';
+  editPhone = '';
+  editDob = '2008-01-01';
+  editGender: Gender = 'Prefer not to say';
+  editAvatar = '👨‍🎓';
+  editParentName = '';
+  editParentPhone = '';
+  editParentRelation = 'Guardian';
+
   editMath: number | null = null;
   editScience: number | null = null;
   editEnglish: number | null = null;
@@ -92,6 +110,19 @@ export class StudentDetails {
 
   get rank(): number {
     return this.student ? this.studentService.getRank(this.student.id) : 0;
+  }
+
+  get attendanceRate(): number {
+    return this.student ? calculateAttendancePercentage(this.student.attendanceRecords) : 100;
+  }
+
+  get isLowAtt(): boolean {
+    return this.student ? isLowAttendance(this.student.attendanceRecords) : false;
+  }
+
+  get recentAttendance(): AttendanceRecord[] {
+    if (!this.student?.attendanceRecords) return [];
+    return [...this.student.attendanceRecords].slice(-5).reverse();
   }
 
   get diffFromAverage(): number {
@@ -167,6 +198,16 @@ export class StudentDetails {
   startEdit(): void {
     if (!this.student) return;
     this.editName = this.student.name;
+    this.editClass = this.student.className || '10-A';
+    this.editEmail = this.student.email || '';
+    this.editPhone = this.student.phone || '';
+    this.editDob = this.student.dateOfBirth || '2008-01-01';
+    this.editGender = this.student.gender || 'Prefer not to say';
+    this.editAvatar = this.student.avatarUrl || '👨‍🎓';
+    this.editParentName = this.student.parentContact?.name || '';
+    this.editParentPhone = this.student.parentContact?.phone || '';
+    this.editParentRelation = this.student.parentContact?.relationship || 'Guardian';
+
     const s = this.student.subjects;
     this.editMath = s.math;
     this.editScience = s.science;
@@ -215,15 +256,30 @@ export class StudentDetails {
       computer: c!,
     };
 
+    const profileData: Partial<Student> = {
+      className: this.editClass,
+      email: this.editEmail.trim(),
+      phone: this.editPhone.trim(),
+      dateOfBirth: this.editDob,
+      gender: this.editGender,
+      avatarUrl: this.editAvatar,
+      parentContact: {
+        name: this.editParentName.trim(),
+        phone: this.editParentPhone.trim(),
+        relationship: this.editParentRelation,
+      },
+    };
+
     const success = this.studentService.updateStudent(
       this.student.id,
       trimmedName,
       updatedSubjects,
+      profileData,
     );
 
     if (success) {
       this.isEditing = false;
-      this.feedbackMessage = 'Student details & subject grades updated successfully.';
+      this.feedbackMessage = 'Student profile and subject marks updated successfully.';
       setTimeout(() => {
         this.feedbackMessage = null;
       }, 3500);

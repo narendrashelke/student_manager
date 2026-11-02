@@ -12,10 +12,13 @@
       </nav>
 
       <div class="nav-actions">
-        <button type="button" class="action-btn secondary-btn" (click)="exportCsv()" title="Export students list & grades to CSV">
-          <span>↓</span> Export Grades CSV
+        <button type="button" class="action-btn import-btn" (click)="openImportModal()" title="Upload CSV roster">
+          <span>↑</span> Import CSV
         </button>
-        <button type="button" class="action-btn text-btn" (click)="resetDemoData()" title="Reset to initial 4 students">
+        <button type="button" class="action-btn secondary-btn" (click)="exportCsv()" title="Export students list & grades to CSV">
+          <span>↓</span> Export CSV
+        </button>
+        <button type="button" class="action-btn text-btn" (click)="resetDemoData()" title="Reset to initial demo data">
           ↺ Reset Demo
         </button>
       </div>
@@ -35,421 +38,829 @@
       </div>
     }
 
-    <header class="student-header">
-      <div class="header-titles">
-        <span class="eyebrow">ACADEMIC ROSTER &amp; SUBJECT GRADES</span>
-        <h1>Student &amp; GPA Management</h1>
-        <p>Manage multi-subject marks (Math, Science, English, History, Computer Science), calculate weighted GPAs, and monitor academic progress.</p>
-      </div>
-    </header>
+    <!-- View Switcher Tabs -->
+    <div class="view-tabs" role="tablist">
+      <button
+        type="button"
+        class="view-tab-btn"
+        [class.active]="activeTab === 'roster'"
+        (click)="activeTab = 'roster'"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'roster'"
+      >
+        <span>📋</span> Student Roster &amp; Profiles
+      </button>
+      <button
+        type="button"
+        class="view-tab-btn"
+        [class.active]="activeTab === 'attendance'"
+        (click)="activeTab = 'attendance'"
+        role="tab"
+        [attr.aria-selected]="activeTab === 'attendance'"
+      >
+        <span>📅</span> Daily Attendance Register
+      </button>
+    </div>
 
-    <section class="summary" aria-label="Student performance summary">
-      <article class="summary-card">
-        <span class="card-label">Total Enrolled</span>
-        <strong>{{ studentService.students.length }}</strong>
-        <span class="card-caption">Students in class</span>
-      </article>
-
-      <article class="summary-card">
-        <span class="card-label">Class Average</span>
-        <strong>
-          @if (studentService.students.length > 0) {
-            {{ studentService.getAverage() | number: '1.1-1' }}<small>%</small>
-          } @else {
-            —
-          }
-        </strong>
-        <span class="card-caption">Mean score across subjects</span>
-      </article>
-
-      <article class="summary-card">
-        <span class="card-label">Class GPA Benchmark</span>
-        <strong>
-          @if (studentService.students.length > 0) {
-            {{ studentService.getClassGPA() | number: '1.1-1' }}<small>/4.0</small>
-          } @else {
-            —
-          }
-        </strong>
-        <span class="card-caption">Average Grade Point Average</span>
-      </article>
-
-      <article class="summary-card">
-        <span class="card-label">Pass Rate</span>
-        <strong>{{ studentService.getPassRate() }}<small>%</small></strong>
-        <span class="card-caption">{{ studentService.getPassingCount() }} of {{ studentService.students.length }} passing</span>
-      </article>
-    </section>
-
-    <section class="form-section" [class.editing-active]="isEditing">
-      <div class="form-header">
-        <div>
-          <h2>{{ isEditing ? 'Edit Student & Subject Grades' : 'Enroll Student & Enter Subject Marks' }}</h2>
-          <p class="form-subtitle">
-            Enter marks (0–100) for each subject. Total, Percentage, Letter Grade, and GPA are calculated automatically.
-          </p>
+    <!-- TAB 1: ROSTER & PROFILE MANAGEMENT -->
+    @if (activeTab === 'roster') {
+      <header class="student-header">
+        <div class="header-titles">
+          <span class="eyebrow">ADMINISTRATION &amp; STUDENT PROFILES</span>
+          <h1>Student Administration</h1>
+          <p>Manage student profiles, class rosters, contact details, subject performance, and attendance benchmarks.</p>
         </div>
-        @if (isEditing) {
-          <span class="editing-tag">Editing ID #{{ editingStudentId }}</span>
-        }
-      </div>
+      </header>
 
-      <form (ngSubmit)="submitForm()">
-        <div class="student-name-row">
-          <label for="student-name">Student Full Name</label>
-          <input
-            id="student-name"
-            type="text"
-            placeholder="e.g. Maya Patel"
-            [(ngModel)]="name"
-            name="name"
-            required
-            autocomplete="off"
-          />
-        </div>
+      <section class="summary" aria-label="Student performance summary">
+        <article class="summary-card">
+          <span class="card-label">Total Enrolled</span>
+          <strong>{{ studentService.students.length }}</strong>
+          <span class="card-caption">Students in school</span>
+        </article>
 
-        <div class="subjects-grid">
-          <div class="subject-input-tile">
-            <label for="subj-math">
-              <span class="subj-icon">📐</span>
-              <span>Mathematics</span>
-            </label>
-            <input
-              id="subj-math"
-              type="number"
-              min="0"
-              max="100"
-              [(ngModel)]="math"
-              name="math"
-              placeholder="0-100"
-              required
-            />
-          </div>
-
-          <div class="subject-input-tile">
-            <label for="subj-sci">
-              <span class="subj-icon">🔬</span>
-              <span>Science</span>
-            </label>
-            <input
-              id="subj-sci"
-              type="number"
-              min="0"
-              max="100"
-              [(ngModel)]="science"
-              name="science"
-              placeholder="0-100"
-              required
-            />
-          </div>
-
-          <div class="subject-input-tile">
-            <label for="subj-eng">
-              <span class="subj-icon">📖</span>
-              <span>English</span>
-            </label>
-            <input
-              id="subj-eng"
-              type="number"
-              min="0"
-              max="100"
-              [(ngModel)]="english"
-              name="english"
-              placeholder="0-100"
-              required
-            />
-          </div>
-
-          <div class="subject-input-tile">
-            <label for="subj-hist">
-              <span class="subj-icon">🏛️</span>
-              <span>History</span>
-            </label>
-            <input
-              id="subj-hist"
-              type="number"
-              min="0"
-              max="100"
-              [(ngModel)]="history"
-              name="history"
-              placeholder="0-100"
-              required
-            />
-          </div>
-
-          <div class="subject-input-tile">
-            <label for="subj-comp">
-              <span class="subj-icon">💻</span>
-              <span>Computer Sci</span>
-            </label>
-            <input
-              id="subj-comp"
-              type="number"
-              min="0"
-              max="100"
-              [(ngModel)]="computer"
-              name="computer"
-              placeholder="0-100"
-              required
-            />
-          </div>
-        </div>
-
-        <div class="computation-bar">
-          <div class="comp-item">
-            <span>Total Score:</span>
-            <strong>{{ computedTotal }} <small>/ 500</small></strong>
-          </div>
-          <div class="comp-item">
-            <span>Percentage:</span>
-            <strong>{{ computedPercentage }}%</strong>
-          </div>
-          <div class="comp-item">
-            <span>Grade:</span>
-            <span class="grade-pill grade-{{ computedGrade.toLowerCase() }}">Grade {{ computedGrade }}</span>
-          </div>
-          <div class="comp-item">
-            <span>GPA:</span>
-            <strong class="gpa-highlight">{{ computedGPA | number: '1.1-1' }} <small>/ 4.0</small></strong>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="submit-btn">
-            {{ isEditing ? '✓ Update Student & Grades' : '+ Enroll & Calculate GPA' }}
-          </button>
-          @if (isEditing) {
-            <button type="button" class="cancel-btn" (click)="cancelEdit()">
-              Cancel
-            </button>
-          }
-        </div>
-      </form>
-    </section>
-
-    <section class="records-section">
-      <div class="records-toolbar">
-        <div>
-          <h2>Student Academic Records</h2>
-          <span class="record-count">Showing {{ filteredStudents.length }} of {{ studentService.students.length }} students</span>
-        </div>
-
-        <div class="toolbar-controls">
-          <div class="search-box">
-            <span class="search-icon" aria-hidden="true">🔍</span>
-            <input
-              class="search-input"
-              type="text"
-              name="search"
-              [(ngModel)]="searchText"
-              placeholder="Search by name or ID..."
-              aria-label="Search students"
-            />
-            @if (searchText) {
-              <button type="button" class="clear-search-btn" (click)="searchText = ''" aria-label="Clear search">✕</button>
+        <article class="summary-card">
+          <span class="card-label">Academic Average</span>
+          <strong>
+            @if (studentService.students.length > 0) {
+              {{ studentService.getAverage() | number: '1.1-1' }}<small>%</small>
+            } @else {
+              —
             }
+          </strong>
+          <span class="card-caption">Class GPA: {{ studentService.getClassGPA() | number: '1.1-1' }}/4.0</span>
+        </article>
+
+        <article class="summary-card">
+          <span class="card-label">Attendance Rate</span>
+          <strong>{{ studentService.getClassAttendanceRate() | number: '1.1-1' }}<small>%</small></strong>
+          <span class="card-caption">Class-wide attendance</span>
+        </article>
+
+        <article class="summary-card">
+          <span class="card-label">Attendance Alerts</span>
+          <strong [class.warning-text]="studentService.getLowAttendanceStudents().length > 0">
+            {{ studentService.getLowAttendanceStudents().length }}
+          </strong>
+          <span class="card-caption">&lt;75% attendance threshold</span>
+        </article>
+      </section>
+
+      <!-- Multi-Selection Bulk Action Bar -->
+      @if (selectedStudentIds.size > 0) {
+        <aside class="bulk-action-bar" aria-live="polite">
+          <div class="bulk-info">
+            <span class="bulk-count">{{ selectedStudentIds.size }} student(s) selected</span>
           </div>
 
-          <div class="filter-pills" role="radiogroup" aria-label="Filter by result">
-            <button
-              type="button"
-              class="pill-btn"
-              [class.active]="statusFilter === 'all'"
-              (click)="statusFilter = 'all'"
-            >
-              All ({{ studentService.students.length }})
+          <div class="bulk-actions-group">
+            <!-- Grace Marks -->
+            <button type="button" class="bulk-btn bulk-grace-btn" (click)="executeBulkGraceMarks()" title="Add grace marks to all subjects">
+              +5 Grace Marks
             </button>
-            <button
-              type="button"
-              class="pill-btn"
-              [class.active]="statusFilter === 'pass'"
-              (click)="statusFilter = 'pass'"
-            >
-              Passed ({{ studentService.getPassingCount() }})
-            </button>
-            <button
-              type="button"
-              class="pill-btn"
-              [class.active]="statusFilter === 'fail'"
-              (click)="statusFilter = 'fail'"
-            >
-              Needs Support ({{ studentService.students.length - studentService.getPassingCount() }})
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col" class="sortable-th" (click)="toggleSort('id')" title="Sort by ID">
-                ID
-                <span class="sort-icon">{{ sortBy === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
-              </th>
-              <th scope="col" class="sortable-th" (click)="toggleSort('name')" title="Sort by Name">
-                Name
-                <span class="sort-icon">{{ sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
-              </th>
-              <th scope="col">Subject Scores (M / S / E / H / CS)</th>
-              <th scope="col" class="sortable-th" (click)="toggleSort('marks')" title="Sort by Percentage">
-                Score / %
-                <span class="sort-icon">{{ sortBy === 'marks' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
-              </th>
-              <th scope="col">Grade &amp; GPA</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="actions-header">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (student of filteredStudents; track student.id) {
-              <tr [class.row-selected]="selectedStudent?.id === student.id" [class.row-editing]="editingStudentId === student.id">
-                <td>
-                  <a class="student-id-link" [routerLink]="['/student', student.id]" title="View full details">
-                    #{{ student.id }}
-                  </a>
-                </td>
-                <td>
-                  <div class="student-cell">
-                    <span class="table-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
-                    <a class="student-name-link" [routerLink]="['/student', student.id]" title="View full details">
-                      {{ student.name }}
-                    </a>
-                  </div>
-                </td>
-                <td>
-                  <div class="subjects-mini-chips">
-                    <span class="chip" title="Mathematics">M: {{ student.subjects.math }}</span>
-                    <span class="chip" title="Science">S: {{ student.subjects.science }}</span>
-                    <span class="chip" title="English">E: {{ student.subjects.english }}</span>
-                    <span class="chip" title="History">H: {{ student.subjects.history }}</span>
-                    <span class="chip" title="Computer Science">CS: {{ student.subjects.computer }}</span>
-                  </div>
-                </td>
-                <td>
-                  <strong>{{ student.marks }}%</strong>
-                  <span class="muted-scale"> ({{ student.subjects.math + student.subjects.science + student.subjects.english + student.subjects.history + student.subjects.computer }}/500)</span>
-                </td>
-                <td>
-                  <div class="grade-gpa-cell">
-                    <span class="grade-pill grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
-                      {{ getStudentGrade(student.marks) }}
-                    </span>
-                    <span class="gpa-pill">
-                      {{ getStudentGPA(student.marks) | number: '1.1-1' }} GPA
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  @if (isStudentPassing(student.marks)) {
-                    <span class="status-badge pass">Passed</span>
-                  } @else {
-                    <span class="status-badge fail">Needs Support</span>
-                  }
-                </td>
-                <td class="actions-cell">
-                  <button
-                    type="button"
-                    class="btn-icon select-btn"
-                    [class.active]="selectedStudent?.id === student.id"
-                    (click)="selectStudent(student)"
-                    title="Quick preview"
-                  >
-                    {{ selectedStudent?.id === student.id ? 'Hide' : 'View' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-icon edit-btn"
-                    (click)="startEdit(student)"
-                    title="Edit student"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-icon delete-btn"
-                    [class.confirming]="confirmingDeleteId === student.id"
-                    (click)="requestDelete(student.id)"
-                    [title]="confirmingDeleteId === student.id ? 'Click again to confirm delete' : 'Delete student'"
-                  >
-                    {{ confirmingDeleteId === student.id ? 'Confirm?' : 'Delete' }}
-                  </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td class="empty-records" colspan="7">
-                  <div class="empty-content">
-                    <span class="empty-glyph" aria-hidden="true">📋</span>
-                    <strong>No students found</strong>
-                    <p>
-                      @if (searchText.trim()) {
-                        No records match "{{ searchText }}". Try clearing the search or filters.
-                      } @else {
-                        No student records enrolled yet. Use the form above to add a student!
-                      }
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      @if (selectedStudent; as student) {
-        <aside class="selected-student-drawer" aria-live="polite">
-          <div class="drawer-header">
-            <span class="drawer-label">ACADEMIC PERFORMANCE SUMMARY</span>
-            <button type="button" class="close-drawer-btn" (click)="selectedStudent = null" aria-label="Close preview">✕</button>
-          </div>
-          <div class="drawer-body">
-            <div class="selected-avatar" aria-hidden="true">{{ student.name.charAt(0).toUpperCase() }}</div>
-            <div class="selected-info">
-              <h3>{{ student.name }}</h3>
-              <p>ID #{{ student.id }} · {{ student.marks }}% Overall · Grade {{ getStudentGrade(student.marks) }} · {{ getStudentGPA(student.marks) | number: '1.1-1' }} GPA</p>
-            </div>
-            <div class="drawer-badges">
-              @if (isStudentPassing(student.marks)) {
-                <span class="status-badge pass">Passed</span>
-              } @else {
-                <span class="status-badge fail">Needs Support</span>
-              }
-            </div>
-            <div class="drawer-actions">
-              <button type="button" class="btn-icon edit-btn" (click)="startEdit(student)">
-                Edit
+            <!-- Assign Class -->
+            <div class="bulk-dropdown-group">
+              <select [(ngModel)]="bulkTargetClass" aria-label="Target class">
+                @for (c of classesList; track c) {
+                  <option [value]="c">Move to Class {{ c }}</option>
+                }
+              </select>
+              <button type="button" class="bulk-btn bulk-class-btn" (click)="executeBulkAssignClass()">
+                Assign Class
               </button>
-              <a class="details-link" [routerLink]="['/student', student.id]">
-                Full Subject Breakdown →
-              </a>
             </div>
-          </div>
 
-          <div class="drawer-subject-bars">
-            <div class="bar-item">
-              <span>Math: {{ student.subjects.math }}/100</span>
-              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.math"></div></div>
-            </div>
-            <div class="bar-item">
-              <span>Science: {{ student.subjects.science }}/100</span>
-              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.science"></div></div>
-            </div>
-            <div class="bar-item">
-              <span>English: {{ student.subjects.english }}/100</span>
-              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.english"></div></div>
-            </div>
-            <div class="bar-item">
-              <span>History: {{ student.subjects.history }}/100</span>
-              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.history"></div></div>
-            </div>
-            <div class="bar-item">
-              <span>Computer: {{ student.subjects.computer }}/100</span>
-              <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.computer"></div></div>
-            </div>
+            <!-- Bulk Attendance -->
+            <button type="button" class="bulk-btn bulk-att-btn" (click)="executeBulkMarkAttendance('present')">
+              Mark Present
+            </button>
+
+            <!-- Bulk Delete -->
+            <button type="button" class="bulk-btn bulk-delete-btn" (click)="executeBulkDelete()">
+              🗑 Delete Selected
+            </button>
+
+            <!-- Clear -->
+            <button type="button" class="bulk-btn bulk-clear-btn" (click)="clearSelection()" aria-label="Deselect all">
+              ✕ Deselect
+            </button>
           </div>
         </aside>
       }
-    </section>
+
+      <!-- Enrollment & Edit Form -->
+      <section class="form-section" [class.editing-active]="isEditing">
+        <div class="form-header">
+          <div>
+            <h2>{{ isEditing ? 'Edit Student Profile & Academic Record' : 'Enroll Student with Rich Profile' }}</h2>
+            <p class="form-subtitle">
+              Enter student details, guardian contacts, class assignment, and individual subject marks (0–100).
+            </p>
+          </div>
+          @if (isEditing) {
+            <span class="editing-tag">Editing ID #{{ editingStudentId }}</span>
+          }
+        </div>
+
+        <form (ngSubmit)="submitForm()">
+          <div class="profile-inputs-grid">
+            <!-- Full Name -->
+            <div class="input-group">
+              <label for="student-name">Full Name *</label>
+              <input
+                id="student-name"
+                type="text"
+                placeholder="e.g. Maya Patel"
+                [(ngModel)]="name"
+                name="name"
+                required
+                autocomplete="off"
+              />
+            </div>
+
+            <!-- Class / Section -->
+            <div class="input-group">
+              <label for="student-class">Class / Section *</label>
+              <select id="student-class" [(ngModel)]="className" name="className">
+                @for (cls of classesList; track cls) {
+                  <option [value]="cls">Class {{ cls }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Email -->
+            <div class="input-group">
+              <label for="student-email">Email Address</label>
+              <input
+                id="student-email"
+                type="email"
+                placeholder="e.g. maya.patel@campusly.edu"
+                [(ngModel)]="email"
+                name="email"
+              />
+            </div>
+
+            <!-- Phone -->
+            <div class="input-group">
+              <label for="student-phone">Phone Number</label>
+              <input
+                id="student-phone"
+                type="tel"
+                placeholder="e.g. +91 98765 00000"
+                [(ngModel)]="phone"
+                name="phone"
+              />
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="input-group">
+              <label for="student-dob">Date of Birth</label>
+              <input
+                id="student-dob"
+                type="date"
+                [(ngModel)]="dateOfBirth"
+                name="dateOfBirth"
+              />
+            </div>
+
+            <!-- Gender -->
+            <div class="input-group">
+              <label for="student-gender">Gender</label>
+              <select id="student-gender" [(ngModel)]="gender" name="gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+
+            <!-- Parent Name -->
+            <div class="input-group">
+              <label for="parent-name">Parent / Guardian Name</label>
+              <input
+                id="parent-name"
+                type="text"
+                placeholder="e.g. Ramesh Patel"
+                [(ngModel)]="parentName"
+                name="parentName"
+              />
+            </div>
+
+            <!-- Parent Phone -->
+            <div class="input-group">
+              <label for="parent-phone">Parent Phone</label>
+              <input
+                id="parent-phone"
+                type="tel"
+                placeholder="e.g. +91 98765 11111"
+                [(ngModel)]="parentPhone"
+                name="parentPhone"
+              />
+            </div>
+          </div>
+
+          <!-- Avatar Picker -->
+          <div class="avatar-picker-section">
+            <span class="avatar-picker-label">Select Student Avatar:</span>
+            <div class="avatar-options">
+              @for (av of avatarsList; track av) {
+                <button
+                  type="button"
+                  class="avatar-option-btn"
+                  [class.selected]="avatarUrl === av"
+                  (click)="avatarUrl = av"
+                >
+                  {{ av }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- 5 Subject Inputs -->
+          <div class="subjects-header">
+            <h3>Subject Scores (0 – 100)</h3>
+            <span class="subjects-subtitle">Enter scores to calculate GPA, Grade, and Rank</span>
+          </div>
+
+          <div class="subjects-grid">
+            <div class="subject-input-tile">
+              <label for="subj-math">
+                <span class="subj-icon">📐</span>
+                <span>Mathematics</span>
+              </label>
+              <input
+                id="subj-math"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="math"
+                name="math"
+                placeholder="0-100"
+                required
+              />
+            </div>
+
+            <div class="subject-input-tile">
+              <label for="subj-sci">
+                <span class="subj-icon">🔬</span>
+                <span>Science</span>
+              </label>
+              <input
+                id="subj-sci"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="science"
+                name="science"
+                placeholder="0-100"
+                required
+              />
+            </div>
+
+            <div class="subject-input-tile">
+              <label for="subj-eng">
+                <span class="subj-icon">📖</span>
+                <span>English</span>
+              </label>
+              <input
+                id="subj-eng"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="english"
+                name="english"
+                placeholder="0-100"
+                required
+              />
+            </div>
+
+            <div class="subject-input-tile">
+              <label for="subj-hist">
+                <span class="subj-icon">🏛️</span>
+                <span>History</span>
+              </label>
+              <input
+                id="subj-hist"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="history"
+                name="history"
+                placeholder="0-100"
+                required
+              />
+            </div>
+
+            <div class="subject-input-tile">
+              <label for="subj-comp">
+                <span class="subj-icon">💻</span>
+                <span>Computer Sci</span>
+              </label>
+              <input
+                id="subj-comp"
+                type="number"
+                min="0"
+                max="100"
+                [(ngModel)]="computer"
+                name="computer"
+                placeholder="0-100"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Computation Bar -->
+          <div class="computation-bar">
+            <div class="comp-item">
+              <span>Total Score:</span>
+              <strong>{{ computedTotal }} <small>/ 500</small></strong>
+            </div>
+            <div class="comp-item">
+              <span>Percentage:</span>
+              <strong>{{ computedPercentage }}%</strong>
+            </div>
+            <div class="comp-item">
+              <span>Grade:</span>
+              <span class="grade-pill grade-{{ computedGrade.toLowerCase() }}">Grade {{ computedGrade }}</span>
+            </div>
+            <div class="comp-item">
+              <span>GPA:</span>
+              <strong class="gpa-highlight">{{ computedGPA | number: '1.1-1' }} <small>/ 4.0</small></strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">
+              {{ isEditing ? '✓ Update Student Profile' : '+ Enroll Student Record' }}
+            </button>
+            @if (isEditing) {
+              <button type="button" class="cancel-btn" (click)="cancelEdit()">
+                Cancel
+              </button>
+            }
+          </div>
+        </form>
+      </section>
+
+      <!-- Records Section -->
+      <section class="records-section">
+        <div class="records-toolbar">
+          <div>
+            <h2>Class Roster</h2>
+            <span class="record-count">Showing {{ filteredStudents.length }} of {{ studentService.students.length }} students</span>
+          </div>
+
+          <div class="toolbar-controls">
+            <!-- Search -->
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input
+                class="search-input"
+                type="text"
+                name="search"
+                [(ngModel)]="searchText"
+                placeholder="Search by name, ID, class, email..."
+                aria-label="Search students"
+              />
+              @if (searchText) {
+                <button type="button" class="clear-search-btn" (click)="searchText = ''" aria-label="Clear search">✕</button>
+              }
+            </div>
+
+            <!-- Class Filter -->
+            <div class="class-filter-box">
+              <select [(ngModel)]="classFilter" aria-label="Filter by class">
+                <option value="all">All Classes</option>
+                @for (c of classesList; track c) {
+                  <option [value]="c">Class {{ c }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-pills" role="radiogroup" aria-label="Filter by result">
+              <button
+                type="button"
+                class="pill-btn"
+                [class.active]="statusFilter === 'all'"
+                (click)="statusFilter = 'all'"
+              >
+                All ({{ studentService.students.length }})
+              </button>
+              <button
+                type="button"
+                class="pill-btn"
+                [class.active]="statusFilter === 'pass'"
+                (click)="statusFilter = 'pass'"
+              >
+                Passed ({{ studentService.getPassingCount() }})
+              </button>
+              <button
+                type="button"
+                class="pill-btn"
+                [class.active]="statusFilter === 'fail'"
+                (click)="statusFilter = 'fail'"
+              >
+                Needs Support ({{ studentService.students.length - studentService.getPassingCount() }})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" class="checkbox-th">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllSelected"
+                    (change)="toggleSelectAll()"
+                    aria-label="Select all students"
+                  />
+                </th>
+                <th scope="col" class="sortable-th" (click)="toggleSort('id')" title="Sort by ID">
+                  ID
+                  <span class="sort-icon">{{ sortBy === 'id' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+                </th>
+                <th scope="col" class="sortable-th" (click)="toggleSort('name')" title="Sort by Name">
+                  Student Profile
+                  <span class="sort-icon">{{ sortBy === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+                </th>
+                <th scope="col" class="sortable-th" (click)="toggleSort('attendance')" title="Sort by Attendance Rate">
+                  Attendance
+                  <span class="sort-icon">{{ sortBy === 'attendance' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+                </th>
+                <th scope="col">Subjects (M/S/E/H/CS)</th>
+                <th scope="col" class="sortable-th" (click)="toggleSort('marks')" title="Sort by Percentage">
+                  Average / %
+                  <span class="sort-icon">{{ sortBy === 'marks' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+                </th>
+                <th scope="col">Grade &amp; GPA</th>
+                <th scope="col" class="actions-header">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (student of filteredStudents; track student.id) {
+                <tr
+                  [class.row-selected]="selectedStudent?.id === student.id"
+                  [class.row-checked]="selectedStudentIds.has(student.id)"
+                  [class.row-editing]="editingStudentId === student.id"
+                >
+                  <td class="checkbox-td">
+                    <input
+                      type="checkbox"
+                      [checked]="selectedStudentIds.has(student.id)"
+                      (change)="toggleSelectStudent(student.id)"
+                      [attr.aria-label]="'Select ' + student.name"
+                    />
+                  </td>
+                  <td>
+                    <a class="student-id-link" [routerLink]="['/student', student.id]" title="View full details">
+                      #{{ student.id }}
+                    </a>
+                  </td>
+                  <td>
+                    <div class="student-cell">
+                      <span class="table-avatar">{{ student.avatarUrl || '🧑‍🎓' }}</span>
+                      <div class="student-name-meta">
+                        <a class="student-name-link" [routerLink]="['/student', student.id]">
+                          {{ student.name }}
+                        </a>
+                        <div class="student-submeta">
+                          <span class="class-tag">Class {{ student.className || '10-A' }}</span>
+                          <span class="email-text">{{ student.email }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="attendance-cell">
+                      <span
+                        class="attendance-pill"
+                        [class.att-low]="hasLowAttendance(student)"
+                        [class.att-good]="!hasLowAttendance(student)"
+                      >
+                        {{ getStudentAttendanceRate(student) | number: '1.0-1' }}%
+                      </span>
+                      @if (hasLowAttendance(student)) {
+                        <span class="low-att-warn" title="Attendance below 75% requirement">⚠ Warning</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <div class="subjects-mini-chips">
+                      <span class="chip" title="Mathematics">M: {{ student.subjects.math }}</span>
+                      <span class="chip" title="Science">S: {{ student.subjects.science }}</span>
+                      <span class="chip" title="English">E: {{ student.subjects.english }}</span>
+                      <span class="chip" title="History">H: {{ student.subjects.history }}</span>
+                      <span class="chip" title="Computer Science">CS: {{ student.subjects.computer }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <strong>{{ student.marks }}%</strong>
+                  </td>
+                  <td>
+                    <div class="grade-gpa-cell">
+                      <span class="grade-pill grade-{{ getStudentGrade(student.marks).toLowerCase() }}">
+                        {{ getStudentGrade(student.marks) }}
+                      </span>
+                      <span class="gpa-pill">
+                        {{ getStudentGPA(student.marks) | number: '1.1-1' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="actions-cell">
+                    <button
+                      type="button"
+                      class="btn-icon select-btn"
+                      [class.active]="selectedStudent?.id === student.id"
+                      (click)="selectStudent(student)"
+                      title="Quick preview"
+                    >
+                      {{ selectedStudent?.id === student.id ? 'Hide' : 'View' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon edit-btn"
+                      (click)="startEdit(student)"
+                      title="Edit student profile"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon delete-btn"
+                      [class.confirming]="confirmingDeleteId === student.id"
+                      (click)="requestDelete(student.id)"
+                      [title]="confirmingDeleteId === student.id ? 'Click again to confirm delete' : 'Delete student'"
+                    >
+                      {{ confirmingDeleteId === student.id ? 'Confirm?' : 'Delete' }}
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td class="empty-records" colspan="8">
+                    <div class="empty-content">
+                      <span class="empty-glyph" aria-hidden="true">📋</span>
+                      <strong>No students found</strong>
+                      <p>
+                        @if (searchText.trim() || classFilter !== 'all') {
+                          No records match your filter criteria. Try clearing the filters.
+                        } @else {
+                          No student records enrolled yet. Use the form above or import from CSV!
+                        }
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (selectedStudent; as student) {
+          <aside class="selected-student-drawer" aria-live="polite">
+            <div class="drawer-header">
+              <span class="drawer-label">STUDENT PROFILE PREVIEW</span>
+              <button type="button" class="close-drawer-btn" (click)="selectedStudent = null" aria-label="Close preview">✕</button>
+            </div>
+            <div class="drawer-body">
+              <div class="selected-avatar" aria-hidden="true">{{ student.avatarUrl || '🧑‍🎓' }}</div>
+              <div class="selected-info">
+                <h3>{{ student.name }} <span class="drawer-class-tag">Class {{ student.className }}</span></h3>
+                <p>
+                  {{ student.email }} · Phone: {{ student.phone || 'N/A' }} · DOB: {{ student.dateOfBirth }}
+                  · Guardian: {{ student.parentContact?.name || 'N/A' }} ({{ student.parentContact?.phone || 'N/A' }})
+                </p>
+              </div>
+              <div class="drawer-badges">
+                <span
+                  class="attendance-pill"
+                  [class.att-low]="hasLowAttendance(student)"
+                  [class.att-good]="!hasLowAttendance(student)"
+                >
+                  {{ getStudentAttendanceRate(student) | number: '1.0-1' }}% Attendance
+                </span>
+                <span class="gpa-pill">{{ getStudentGPA(student.marks) | number: '1.1-1' }} GPA</span>
+              </div>
+              <div class="drawer-actions">
+                <button type="button" class="btn-icon edit-btn" (click)="startEdit(student)">
+                  Edit Profile
+                </button>
+                <a class="details-link" [routerLink]="['/student', student.id]">
+                  Full Profile &amp; Transcripts →
+                </a>
+              </div>
+            </div>
+
+            <div class="drawer-subject-bars">
+              <div class="bar-item">
+                <span>Math: {{ student.subjects.math }}/100</span>
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.math"></div></div>
+              </div>
+              <div class="bar-item">
+                <span>Science: {{ student.subjects.science }}/100</span>
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.science"></div></div>
+              </div>
+              <div class="bar-item">
+                <span>English: {{ student.subjects.english }}/100</span>
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.english"></div></div>
+              </div>
+              <div class="bar-item">
+                <span>History: {{ student.subjects.history }}/100</span>
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.history"></div></div>
+              </div>
+              <div class="bar-item">
+                <span>Computer: {{ student.subjects.computer }}/100</span>
+                <div class="mini-bar"><div class="mini-fill" [style.width.%]="student.subjects.computer"></div></div>
+              </div>
+            </div>
+          </aside>
+        }
+      </section>
+    }
+
+    <!-- TAB 2: DAILY ATTENDANCE REGISTER -->
+    @if (activeTab === 'attendance') {
+      <section class="attendance-register-section">
+        <header class="attendance-header">
+          <div>
+            <span class="eyebrow">ATTENDANCE MODULE</span>
+            <h1>Daily Attendance Register</h1>
+            <p>Mark daily attendance across all classes. Records immediately calculate monthly attendance percentages.</p>
+          </div>
+
+          <div class="attendance-controls">
+            <div class="date-picker-group">
+              <label for="att-date">Date:</label>
+              <input
+                id="att-date"
+                type="date"
+                [(ngModel)]="attendanceDate"
+                (change)="onAttendanceDateChange()"
+              />
+            </div>
+            <button type="button" class="secondary-btn" (click)="markAllDraftPresent()">
+              ✓ Mark All Present
+            </button>
+            <button type="button" class="submit-btn" (click)="saveAttendanceRegister()">
+              💾 Save Register
+            </button>
+          </div>
+        </header>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Student ID</th>
+                <th scope="col">Student</th>
+                <th scope="col">Class</th>
+                <th scope="col">Monthly Attendance Rate</th>
+                <th scope="col">Status for {{ attendanceDate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (student of studentService.students; track student.id) {
+                <tr>
+                  <td>#{{ student.id }}</td>
+                  <td>
+                    <div class="student-cell">
+                      <span class="table-avatar">{{ student.avatarUrl || '🧑‍🎓' }}</span>
+                      <strong>{{ student.name }}</strong>
+                    </div>
+                  </td>
+                  <td><span class="class-tag">{{ student.className }}</span></td>
+                  <td>
+                    <div class="attendance-cell">
+                      <span
+                        class="attendance-pill"
+                        [class.att-low]="hasLowAttendance(student)"
+                        [class.att-good]="!hasLowAttendance(student)"
+                      >
+                        {{ getStudentAttendanceRate(student) | number: '1.0-1' }}%
+                      </span>
+                      @if (hasLowAttendance(student)) {
+                        <span class="low-att-warn">⚠ Low Attendance</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <div class="attendance-status-buttons" role="group" [attr.aria-label]="'Attendance for ' + student.name">
+                      <button
+                        type="button"
+                        class="att-choice-btn present"
+                        [class.selected]="attendanceDraft[student.id] === 'present'"
+                        (click)="setStudentAttendanceDraft(student.id, 'present')"
+                      >
+                        Present
+                      </button>
+                      <button
+                        type="button"
+                        class="att-choice-btn absent"
+                        [class.selected]="attendanceDraft[student.id] === 'absent'"
+                        (click)="setStudentAttendanceDraft(student.id, 'absent')"
+                      >
+                        Absent
+                      </button>
+                      <button
+                        type="button"
+                        class="att-choice-btn late"
+                        [class.selected]="attendanceDraft[student.id] === 'late'"
+                        (click)="setStudentAttendanceDraft(student.id, 'late')"
+                      >
+                        Late
+                      </button>
+                      <button
+                        type="button"
+                        class="att-choice-btn excused"
+                        [class.selected]="attendanceDraft[student.id] === 'excused'"
+                        (click)="setStudentAttendanceDraft(student.id, 'excused')"
+                      >
+                        Excused
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- MODAL: BULK CSV IMPORT -->
+    @if (showImportModal) {
+      <div class="modal-backdrop" (click)="closeImportModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()" role="dialog" aria-labelledby="modal-title">
+          <div class="modal-header">
+            <div>
+              <span class="eyebrow">BULK ROSTER IMPORT</span>
+              <h2 id="modal-title">Import Students via CSV</h2>
+            </div>
+            <button type="button" class="close-modal-btn" (click)="closeImportModal()" aria-label="Close modal">✕</button>
+          </div>
+
+          <div class="modal-body">
+            <p>
+              Upload a `.csv` file containing whole class rosters, profiles, contact details, and marks.
+              Download the template below to ensure proper columns.
+            </p>
+
+            <div class="template-download-strip">
+              <span>Download sample template with valid columns:</span>
+              <button type="button" class="secondary-btn" (click)="downloadCsvTemplate()">
+                ⬇ Download Template CSV
+              </button>
+            </div>
+
+            <div class="file-drop-area">
+              <label for="csv-file-input" class="file-label">
+                <span class="file-icon">📄</span>
+                <strong>Choose a CSV file to upload</strong>
+                <span>or drag and drop file here</span>
+              </label>
+              <input
+                id="csv-file-input"
+                type="file"
+                accept=".csv"
+                (change)="onCsvFileChange($event)"
+              />
+            </div>
+
+            <div class="textarea-group">
+              <label for="csv-text-paste">Or paste raw CSV text:</label>
+              <textarea
+                id="csv-text-paste"
+                rows="5"
+                [(ngModel)]="importCsvText"
+                placeholder="Name,Class,Email,Phone,Gender,DateOfBirth,ParentName,ParentPhone,Math,Science,English,History,Computer&#10;Priya Sharma,10-A,priya@campusly.edu,+91 99999 11111,Female,2008-07-15,Vikas Sharma,+91 99999 22222,90,92,88,85,95"
+              ></textarea>
+            </div>
+
+            @if (importErrors.length > 0) {
+              <div class="import-errors-box" role="alert">
+                <strong>Import Warnings &amp; Errors:</strong>
+                <ul>
+                  @for (err of importErrors; track err) {
+                    <li>{{ err }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="cancel-btn" (click)="closeImportModal()">Cancel</button>
+            <button type="button" class="submit-btn" (click)="executeCsvImport()">
+              Confirm &amp; Import Students
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   </main>
 </div>

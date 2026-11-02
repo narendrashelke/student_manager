@@ -33,11 +33,11 @@
   @if (student; as currentStudent) {
     <section class="profile-card" aria-labelledby="student-name">
       <div class="profile-banner">
-        <div class="banner-tag">ACADEMIC TRANSCRIPT &amp; SUBJECT REPORT</div>
+        <div class="banner-tag">STUDENT DOSSIER &amp; ACADEMIC RECORD</div>
         <div class="banner-actions">
           @if (!isEditing) {
             <button type="button" class="action-btn edit-btn" (click)="startEdit()">
-              ✎ Edit Subject Marks
+              ✎ Edit Profile &amp; Marks
             </button>
             <button
               type="button"
@@ -54,18 +54,51 @@
       <div class="profile-content">
         @if (!isEditing) {
           <div class="identity">
-            <div class="avatar" aria-hidden="true">{{ currentStudent.name.charAt(0).toUpperCase() }}</div>
+            <div class="avatar" aria-hidden="true">{{ currentStudent.avatarUrl || '🧑‍🎓' }}</div>
             <div class="identity-copy">
-              <h1 id="student-name">{{ currentStudent.name }}</h1>
-              <span class="student-id">Student ID <strong>#{{ currentStudent.id }}</strong> · Session 2026</span>
+              <div class="identity-title-row">
+                <h1 id="student-name">{{ currentStudent.name }}</h1>
+                <span class="class-badge">Class {{ currentStudent.className || '10-A' }}</span>
+              </div>
+              <span class="student-id">
+                Student ID <strong>#{{ currentStudent.id }}</strong> · {{ currentStudent.email }}
+              </span>
             </div>
             <div class="identity-badges">
+              <span
+                class="attendance-pill"
+                [class.att-low]="isLowAtt"
+                [class.att-good]="!isLowAtt"
+              >
+                {{ attendanceRate | number: '1.0-1' }}% Attendance
+              </span>
               <span class="gpa-badge">{{ gpa | number: '1.1-1' }} GPA</span>
               @if (isPassing) {
                 <span class="result-badge passed">Passing</span>
               } @else {
                 <span class="result-badge needs-work">Needs Support</span>
               }
+            </div>
+          </div>
+
+          <!-- Student Profile & Contact Info Card -->
+          <div class="personal-info-card">
+            <div class="info-item">
+              <span class="info-label">PHONE</span>
+              <strong>{{ currentStudent.phone || 'Not Provided' }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">DATE OF BIRTH</span>
+              <strong>{{ currentStudent.dateOfBirth || 'N/A' }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">GENDER</span>
+              <strong>{{ currentStudent.gender || 'Prefer not to say' }}</strong>
+            </div>
+            <div class="info-item">
+              <span class="info-label">GUARDIAN CONTACT</span>
+              <strong>{{ currentStudent.parentContact?.name || 'N/A' }} ({{ currentStudent.parentContact?.relationship || 'Guardian' }})</strong>
+              <small>{{ currentStudent.parentContact?.phone || 'No phone' }}</small>
             </div>
           </div>
 
@@ -116,6 +149,33 @@
               </span>
             </article>
           </div>
+
+          <!-- Attendance Status & Recent Log -->
+          <section class="attendance-summary-card" [class.att-warning-border]="isLowAtt">
+            <div class="att-card-header">
+              <div>
+                <h3>Attendance Record: {{ attendanceRate | number: '1.0-1' }}%</h3>
+                @if (isLowAtt) {
+                  <p class="att-warning-text">⚠ Attendance Warning: Below the school requirement of 75%.</p>
+                } @else {
+                  <p class="att-normal-text">Good standing: Meets institutional attendance requirements.</p>
+                }
+              </div>
+            </div>
+
+            @if (recentAttendance.length > 0) {
+              <div class="recent-att-strip">
+                <span class="strip-label">Recent Sessions:</span>
+                <div class="att-chips">
+                  @for (rec of recentAttendance; track rec.date) {
+                    <span class="att-chip status-{{ rec.status }}">
+                      {{ rec.date }}: {{ rec.status | uppercase }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </section>
 
           <!-- Strengths & Weaknesses banner -->
           <div class="insights-strip">
@@ -177,92 +237,114 @@
             </div>
           </section>
         } @else {
-          <!-- Edit Form Mode -->
+          <!-- Full Edit Mode -->
           <div class="edit-mode-container">
-            <h2>Edit Marks &amp; Subjects for Student #{{ currentStudent.id }}</h2>
-            <p class="edit-subtitle">Update marks for each individual subject (0–100).</p>
+            <h2>Edit Complete Student Profile #{{ currentStudent.id }}</h2>
+            <p class="edit-subtitle">Update personal info, contacts, class, and individual subject marks.</p>
 
             <form (ngSubmit)="saveEdit()" class="edit-form">
+              <div class="edit-profile-grid">
+                <div class="form-group">
+                  <label for="edit-name">Full Name</label>
+                  <input id="edit-name" type="text" [(ngModel)]="editName" name="editName" required />
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-class">Class / Section</label>
+                  <select id="edit-class" [(ngModel)]="editClass" name="editClass">
+                    @for (c of classesList; track c) {
+                      <option [value]="c">Class {{ c }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-email">Email</label>
+                  <input id="edit-email" type="email" [(ngModel)]="editEmail" name="editEmail" />
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-phone">Phone</label>
+                  <input id="edit-phone" type="tel" [(ngModel)]="editPhone" name="editPhone" />
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-dob">Date of Birth</label>
+                  <input id="edit-dob" type="date" [(ngModel)]="editDob" name="editDob" />
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-gender">Gender</label>
+                  <select id="edit-gender" [(ngModel)]="editGender" name="editGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-parent-name">Guardian Name</label>
+                  <input id="edit-parent-name" type="text" [(ngModel)]="editParentName" name="editParentName" />
+                </div>
+
+                <div class="form-group">
+                  <label for="edit-parent-phone">Guardian Phone</label>
+                  <input id="edit-parent-phone" type="tel" [(ngModel)]="editParentPhone" name="editParentPhone" />
+                </div>
+              </div>
+
+              <!-- Avatar Selection -->
               <div class="form-group">
-                <label for="edit-name">Student Full Name</label>
-                <input
-                  id="edit-name"
-                  type="text"
-                  [(ngModel)]="editName"
-                  name="editName"
-                  required
-                />
+                <label>Select Avatar Icon</label>
+                <div class="avatar-choices">
+                  @for (av of avatarsList; track av) {
+                    <button
+                      type="button"
+                      class="avatar-choice-btn"
+                      [class.selected]="editAvatar === av"
+                      (click)="editAvatar = av"
+                    >
+                      {{ av }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Subject Marks -->
+              <div class="edit-subjects-header">
+                <h3>Subject Marks (0–100)</h3>
               </div>
 
               <div class="edit-subjects-grid">
                 <div class="edit-subject-tile">
                   <label for="edit-math">📐 Mathematics</label>
-                  <input
-                    id="edit-math"
-                    type="number"
-                    [(ngModel)]="editMath"
-                    name="editMath"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <input id="edit-math" type="number" [(ngModel)]="editMath" name="editMath" min="0" max="100" required />
                 </div>
 
                 <div class="edit-subject-tile">
                   <label for="edit-sci">🔬 Science</label>
-                  <input
-                    id="edit-sci"
-                    type="number"
-                    [(ngModel)]="editScience"
-                    name="editScience"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <input id="edit-sci" type="number" [(ngModel)]="editScience" name="editScience" min="0" max="100" required />
                 </div>
 
                 <div class="edit-subject-tile">
                   <label for="edit-eng">📖 English</label>
-                  <input
-                    id="edit-eng"
-                    type="number"
-                    [(ngModel)]="editEnglish"
-                    name="editEnglish"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <input id="edit-eng" type="number" [(ngModel)]="editEnglish" name="editEnglish" min="0" max="100" required />
                 </div>
 
                 <div class="edit-subject-tile">
                   <label for="edit-hist">🏛️ History</label>
-                  <input
-                    id="edit-hist"
-                    type="number"
-                    [(ngModel)]="editHistory"
-                    name="editHistory"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <input id="edit-hist" type="number" [(ngModel)]="editHistory" name="editHistory" min="0" max="100" required />
                 </div>
 
                 <div class="edit-subject-tile">
                   <label for="edit-comp">💻 Computer Sci</label>
-                  <input
-                    id="edit-comp"
-                    type="number"
-                    [(ngModel)]="editComputer"
-                    name="editComputer"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <input id="edit-comp" type="number" [(ngModel)]="editComputer" name="editComputer" min="0" max="100" required />
                 </div>
               </div>
 
               <div class="edit-actions">
-                <button type="submit" class="save-btn">✓ Save Subject Marks</button>
+                <button type="submit" class="save-btn">✓ Save Complete Profile</button>
                 <button type="button" class="cancel-btn" (click)="cancelEdit()">Cancel</button>
               </div>
             </form>

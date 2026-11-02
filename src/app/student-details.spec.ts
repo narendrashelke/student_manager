@@ -72,6 +72,31 @@ describe('StudentDetails', () => {
     expect(component.totalMarks).toBe(490);
   });
 
+  it('should display rich profile fields and attendance summary', () => {
+    expect(component.student?.email).toBe('ayush.sharma@campusly.edu');
+    expect(component.student?.phone).toBe('+91 98765 43210');
+    expect(component.student?.className).toBe('10-A');
+    expect(component.student?.parentContact?.name).toBe('Rakesh Sharma');
+    expect(component.attendanceRate).toBeGreaterThan(0);
+    expect(component.recentAttendance.length).toBeGreaterThan(0);
+  });
+
+  it('should allow editing and saving rich profile details', () => {
+    component.startEdit();
+    component.editEmail = 'new.ayush@school.edu';
+    component.editPhone = '+91 90000 00000';
+    component.editClass = '10-B';
+    component.editParentName = 'Sunita Kumar';
+    component.editParentRelation = 'Mother';
+    component.saveEdit();
+
+    expect(component.student?.email).toBe('new.ayush@school.edu');
+    expect(component.student?.phone).toBe('+91 90000 00000');
+    expect(component.student?.className).toBe('10-B');
+    expect(component.student?.parentContact?.name).toBe('Sunita Kumar');
+    expect(component.student?.parentContact?.relationship).toBe('Mother');
+  });
+
   it('should navigate to /students on delete', () => {
     const navigateSpy = vi.spyOn(router, 'navigate');
     component.deleteStudent();

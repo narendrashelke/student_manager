@@ -8,33 +8,53 @@ A modern, responsive **Student Management System** built with **Angular (Standal
 
 ## 🌟 Key Features
 
-### 1. Complete CRUD Operations
-- **Create:** Add new students with strict input validation (name and marks between 0–100).
+### 1. Complete CRUD Operations & Multi-Subject Academics
+- **Create:** Add new students with rich profile details and individual marks across 5 subjects.
 - **Read:**
-  - **Overview Dashboard:** Class metrics, honor roll, and recent student activity.
-  - **Student Roster:** Search by name/ID, filter by status (All / Passed / Needs Support), and sortable columns (ID, Name, Marks).
-  - **Student Profile:** Dedicated profile page (`/student/:id`) showing grade, class rank, and performance vs. class average.
-- **Update:** Edit any student's name and marks directly from the roster table or profile view.
+  - **Overview Dashboard:** Class metrics, attendance rate, honors watchlist, and low-attendance warnings.
+  - **Student Roster:** Multi-criteria search, class filter, pass/fail status filters, and sorting by name, marks, ID, or attendance.
+  - **Student Profile:** Dedicated profile page (`/student/:id`) showing grade, class rank, guardian contacts, attendance rate, and subject-by-subject strengths & weaknesses.
+- **Update:** Edit any student's name, marks, subjects, contact details, and parent/guardian info directly from the roster or profile view.
 - **Delete:** Safe two-step inline confirmation (`Delete` → `Confirm?`) to prevent accidental deletion.
-
-### 2. Multi-Subject Marks & GPA Calculation
 - **5 Core Subjects Tracked:** Mathematics (📐), Science (🔬), English (📖), History (🏛️), and Computer Science (💻).
-- **Automated GPA (4.0 scale):** Converts percentage to weighted Grade Point Average.
-- **Subject-by-Subject Academic Profile:** Individual subject progress bars, strengths & weaknesses identification, and class subject averages.
-- **Automated letter grade computation:**
-  - **Grade A:** 90 – 100 (4.0 GPA)
-  - **Grade B:** 80 – 89 (3.0 – 3.9 GPA)
-  - **Grade C:** 70 – 79 (2.0 – 2.9 GPA)
-  - **Grade D:** 60 – 69 (1.0 – 1.9 GPA)
-  - **Grade E:** 40 – 59 (0.1 – 0.9 GPA)
-  - **Grade F:** < 40 (0.0 GPA / Needs Academic Support)
-- **Grade Distribution Breakdown:** Visual distribution summary of all letter grades in the class.
-- **Class Benchmarks:** Dynamic computation of class average, class GPA benchmark, highest score, lowest score, and pass rate.
+- **Automated GPA & Grade Distribution:** Real-time 4.0 GPA conversion, letter grades (A–F), and class distribution stats.
 
-### 3. Data Persistence & Export
-- **LocalStorage Persistence:** All additions, modifications, and deletions persist across page refreshes and browser restarts.
-- **CSV Export:** One-click download of the complete student roster to CSV format.
-- **Reset Demo Data:** Quick reset to default demo records whenever needed.
+### 2. 📋 Administration & Rich Student Profiles
+- **Comprehensive Demographic & Contact Records:**
+  - Email address and phone number with validation.
+  - Date of Birth and Gender selection.
+  - Section / Class assignment (`10-A`, `10-B`, `10-C`, `11-A`, `11-B`, `12-A`).
+  - Parent / Guardian contact (Full Name, Phone number, and Relationship).
+  - Avatar / Profile Photo selection from a variety of student avatars.
+
+### 3. 📅 Attendance Tracking Module
+- **Daily Attendance Register:**
+  - View and record daily attendance per class or across the entire school.
+  - Statuses: **Present**, **Absent**, **Late**, and **Excused**.
+  - One-click "Mark All Present" shortcut for rapid morning attendance.
+  - Date picker to view or record historical attendance sessions.
+- **Automated Warning Alerts:**
+  - Real-time monthly attendance percentage calculation.
+  - Automatic low-attendance warning banner on student profiles and dashboard for students falling below **75%**.
+
+### 4. 📂 Bulk CSV / Excel Import & Template
+- **Class Roster CSV Import:**
+  - Import whole class rosters at once via CSV upload or pasted text.
+  - Downloadable CSV template (`campusly_student_import_template.csv`) with pre-configured headers and example data.
+  - Automatic data validation, error checking, and detailed feedback per row.
+- **Comprehensive CSV Export:**
+  - Export the full student roster with demographic details, academic scores, and attendance rates to CSV.
+
+### 5. ☑️ Multi-Selection Bulk Actions
+- Checkbox multi-selection (Select All, Deselect All, individual student selection).
+- **Batch Grace Marks:** Award configurable grace marks (+1 to +10 pts) across all subjects for selected students in one click.
+- **Batch Class Transfer:** Move selected students to another class section instantly.
+- **Batch Attendance:** Mark selected students as Present, Absent, or Late for the selected date.
+- **Batch Deletion:** Permanently remove multiple selected students in one operation.
+
+### 6. 💾 Live Mock REST API & Persistence
+- **JSON Server:** Live mock REST backend running on `http://localhost:3000/students` synchronized with `db.json`.
+- **LocalStorage Fallback:** Full offline support and persistence when running without the mock server.
 
 ---
 
@@ -75,7 +95,7 @@ The API server runs on `http://localhost:3000/students` watching `db.json`.
 ## 🧪 Testing & Build
 
 ```bash
-# Run unit tests with Vitest (30 passing tests across 5 test suites)
+# Run unit tests with Vitest (44 passing tests across 5 test suites)
 npm test
 
 # Build optimized production bundle
@@ -86,8 +106,8 @@ npm run build
 
 ## 🛠 Tech Stack
 
-- **Framework:** Angular (Standalone Architecture)
+- **Framework:** Angular 19+ (Standalone Architecture)
 - **Language:** TypeScript
 - **Testing:** Vitest
-- **Tooling:** Angular CLI, Vite
-- **Styling:** CSS3 (Modern variables, Flexbox & CSS Grid, responsive design)
+- **Tooling:** Angular CLI, Vite, json-server
+- **Styling:** CSS3 (Custom design system, CSS Grid & Flexbox, responsive layout)

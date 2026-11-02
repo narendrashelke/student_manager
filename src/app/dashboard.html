@@ -29,7 +29,7 @@
   <main class="dashboard-main">
     <header class="topbar">
       <div>
-        <span class="eyebrow">ACADEMIC &amp; GPA OVERVIEW</span>
+        <span class="eyebrow">ACADEMIC &amp; ATTENDANCE OVERVIEW</span>
         <h1>Executive Dashboard</h1>
       </div>
       <a class="primary-button" routerLink="/students">
@@ -40,10 +40,10 @@
 
     <section class="welcome-banner" aria-labelledby="welcome-title">
       <div class="welcome-copy">
-        <span class="welcome-kicker">MULTI-SUBJECT PERFORMANCE</span>
+        <span class="welcome-kicker">INSTITUTIONAL METRICS</span>
         <h2 id="welcome-title">Welcome back, Admin</h2>
-        <p>Monitor multi-subject marks, GPA benchmarks, and student academic trajectory.</p>
-        <a routerLink="/students">Open student grade roster <span aria-hidden="true">→</span></a>
+        <p>Monitor multi-subject marks, GPA benchmarks, student profiles, and daily attendance.</p>
+        <a routerLink="/students">Open student administration roster <span aria-hidden="true">→</span></a>
       </div>
       <div class="welcome-art" aria-hidden="true">
         <span class="art-sun"></span>
@@ -60,12 +60,12 @@
           <span class="stat-icon students-icon" aria-hidden="true">♙</span>
         </div>
         <strong>{{ studentService.students.length }}</strong>
-        <span class="stat-caption">Enrolled in class</span>
+        <span class="stat-caption">Enrolled students</span>
       </article>
 
       <article class="stat-card">
         <div class="stat-heading">
-          <span>Class Average</span>
+          <span>Academic Average</span>
           <span class="stat-icon average-icon" aria-hidden="true">↗</span>
         </div>
         <strong>{{ averageMarks | number: '1.1-1' }}<small>%</small></strong>
@@ -78,7 +78,24 @@
           <span class="stat-icon gpa-icon" aria-hidden="true">🎓</span>
         </div>
         <strong>{{ classGPA | number: '1.1-1' }}<small>/4.0</small></strong>
-        <span class="stat-caption">Cumulative GPA scale</span>
+        <span class="stat-caption">Weighted GPA benchmark</span>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-heading">
+          <span>Attendance Rate</span>
+          <span class="stat-icon" aria-hidden="true">📅</span>
+        </div>
+        <strong [class.warning-text]="lowAttendanceStudents.length > 0">
+          {{ attendanceRate | number: '1.1-1' }}<small>%</small>
+        </strong>
+        <span class="stat-caption">
+          @if (lowAttendanceStudents.length > 0) {
+            {{ lowAttendanceStudents.length }} student(s) below 75%
+          } @else {
+            All students above 75%
+          }
+        </span>
       </article>
 
       <article class="stat-card">
@@ -92,7 +109,7 @@
 
       <article class="stat-card">
         <div class="stat-heading">
-          <span>Highest Score</span>
+          <span>Top Score</span>
           <span class="stat-icon trophy-icon" aria-hidden="true">★</span>
         </div>
         <strong>
@@ -102,22 +119,7 @@
             —
           }
         </strong>
-        <span class="stat-caption">Class high score</span>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-heading">
-          <span>Lowest Score</span>
-          <span class="stat-icon lowest-icon" aria-hidden="true">▼</span>
-        </div>
-        <strong>
-          @if (studentService.students.length > 0) {
-            {{ lowestMarks }}<small>%</small>
-          } @else {
-            —
-          }
-        </strong>
-        <span class="stat-caption">Class low score</span>
+        <span class="stat-caption">Highest overall average</span>
       </article>
     </section>
 
@@ -152,7 +154,7 @@
         <div class="panel-header">
           <div>
             <span class="eyebrow">CLASS ROSTER</span>
-            <h2>Recent Students &amp; GPA</h2>
+            <h2>Recent Students, GPA &amp; Attendance</h2>
           </div>
           <a class="text-link" routerLink="/students">View all ({{ studentService.students.length }}) <span aria-hidden="true">→</span></a>
         </div>
@@ -163,7 +165,8 @@
               <thead>
                 <tr>
                   <th scope="col">Student</th>
-                  <th scope="col">Student ID</th>
+                  <th scope="col">Class</th>
+                  <th scope="col">Attendance</th>
                   <th scope="col">Average %</th>
                   <th scope="col">Grade</th>
                   <th scope="col">GPA</th>
@@ -175,12 +178,24 @@
                   <tr>
                     <td>
                       <div class="student-name">
-                        <span class="student-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
-                        <a class="student-name-link" [routerLink]="['/student', student.id]">{{ student.name }}</a>
+                        <span class="student-avatar-icon">{{ student.avatarUrl || '🧑‍🎓' }}</span>
+                        <div class="student-info-col">
+                          <a class="student-name-link" [routerLink]="['/student', student.id]">{{ student.name }}</a>
+                          <span class="student-id-sub">#{{ student.id }}</span>
+                        </div>
                       </div>
                     </td>
-                    <td class="muted-cell">
-                      <a class="student-id-link" [routerLink]="['/student', student.id]">#{{ student.id }}</a>
+                    <td>
+                      <span class="class-tag">Class {{ student.className || '10-A' }}</span>
+                    </td>
+                    <td>
+                      <span
+                        class="attendance-pill"
+                        [class.att-low]="hasLowAttendance(student)"
+                        [class.att-good]="!hasLowAttendance(student)"
+                      >
+                        {{ getStudentAttendance(student) | number: '1.0-1' }}%
+                      </span>
                     </td>
                     <td>
                       <strong>{{ student.marks }}%</strong>
@@ -218,6 +233,33 @@
       </article>
 
       <div class="side-insights">
+        <!-- Low Attendance Alerts Card -->
+        @if (lowAttendanceStudents.length > 0) {
+          <article class="panel alert-panel">
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow warning-eyebrow">ATTENDANCE WATCHLIST</span>
+                <h2>Low Attendance (&lt;75%)</h2>
+              </div>
+              <span class="alert-tag">⚠ Attention</span>
+            </div>
+
+            <ul class="low-att-list">
+              @for (st of lowAttendanceStudents; track st.id) {
+                <li>
+                  <span class="performer-avatar-icon">{{ st.avatarUrl || '🧑‍🎓' }}</span>
+                  <div class="low-att-info">
+                    <a [routerLink]="['/student', st.id]">{{ st.name }}</a>
+                    <span>Class {{ st.className }} · {{ st.phone || 'No phone' }}</span>
+                  </div>
+                  <strong class="low-att-score">{{ getStudentAttendance(st) | number: '1.0-1' }}%</strong>
+                </li>
+              }
+            </ul>
+          </article>
+        }
+
+        <!-- Top Performers -->
         <article class="panel performance-panel">
           <div class="panel-header">
             <div>
@@ -232,10 +274,10 @@
               @for (student of topStudents; track student.id; let position = $index) {
                 <li>
                   <span class="rank">{{ position + 1 }}</span>
-                  <span class="performer-avatar">{{ student.name.charAt(0).toUpperCase() }}</span>
+                  <span class="performer-avatar-icon">{{ student.avatarUrl || '🧑‍🎓' }}</span>
                   <div class="performer-info">
                     <a class="performer-name" [routerLink]="['/student', student.id]">{{ student.name }}</a>
-                    <span class="performer-grade">GPA {{ getStudentGPA(student.marks) | number: '1.1-1' }} · Grade {{ getStudentGrade(student.marks) }}</span>
+                    <span class="performer-grade">Class {{ student.className }} · GPA {{ getStudentGPA(student.marks) | number: '1.1-1' }}</span>
                   </div>
                   <strong class="performer-score">{{ student.marks }}<small>%</small></strong>
                 </li>
@@ -264,6 +306,7 @@
           </div>
         </article>
 
+        <!-- Grade Distribution -->
         <article class="panel grade-distribution-panel">
           <div class="panel-header">
             <div>

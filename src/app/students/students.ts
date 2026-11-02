@@ -1,48 +1,88 @@
 import { Component } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   Student,
   SubjectMarks,
   SUBJECTS,
+  AVAILABLE_AVATARS,
+  AVAILABLE_CLASSES,
+  AttendanceStatus,
   calculateGrade,
   isPassing,
   calculateGPA,
-  calculateAverage,
+  calculateAttendancePercentage,
+  isLowAttendance,
+  Gender,
 } from '../student.model';
 import { StudentService } from '../student.service';
 
 @Component({
   selector: 'app-students',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterLink, RouterLinkActive],
   templateUrl: './students.html',
   styleUrl: './students.css',
 })
 export class Students {
   readonly subjectsList = SUBJECTS;
+  readonly avatarsList = AVAILABLE_AVATARS;
+  readonly classesList = AVAILABLE_CLASSES;
 
+  activeTab: 'roster' | 'attendance' = 'roster';
+
+  // --- Form fields ---
   name = '';
+  className = '10-A';
+  email = '';
+  phone = '';
+  dateOfBirth = '2008-01-01';
+  gender: Gender = 'Prefer not to say';
+  avatarUrl = '👨‍🎓';
+  parentName = '';
+  parentPhone = '';
+  parentRelation = 'Guardian';
+
   math: number | null = 85;
   science: number | null = 85;
   english: number | null = 85;
   history: number | null = 85;
   computer: number | null = 85;
 
+  // --- Filters & Sorting ---
   searchText = '';
   statusFilter: 'all' | 'pass' | 'fail' = 'all';
-  sortBy: 'id' | 'name' | 'marks' = 'id';
+  classFilter = 'all';
+  sortBy: 'id' | 'name' | 'marks' | 'attendance' = 'id';
   sortDirection: 'asc' | 'desc' = 'asc';
 
   selectedStudent: Student | null = null;
   editingStudentId: number | null = null;
   confirmingDeleteId: number | null = null;
 
+  // --- Bulk Selection ---
+  selectedStudentIds = new Set<number>();
+  bulkGraceMarks = 5;
+  bulkTargetClass = '10-A';
+
+  // --- Attendance Register ---
+  attendanceDate = new Date().toISOString().substring(0, 10);
+  attendanceDraft: Record<number, AttendanceStatus> = {};
+
+  // --- CSV Import ---
+  showImportModal = false;
+  importCsvText = '';
+  importErrors: string[] = [];
+  importSuccessCount = 0;
+
+  // --- Alerts ---
   alertMessage: string | null = null;
   alertType: 'success' | 'info' | 'warning' = 'success';
 
-  constructor(public studentService: StudentService) {}
+  constructor(public studentService: StudentService) {
+    this.initAttendanceDraft();
+  }
 
   get isEditing(): boolean {
     return this.editingStudentId !== null;
@@ -106,9 +146,15 @@ export class Students {
     let list = this.studentService.students.filter((student) => {
       const matchesSearch =
         student.name.toLowerCase().includes(search) ||
-        student.id.toString().includes(search);
+        student.id.toString().includes(search) ||
+        (student.email && student.email.toLowerCase().includes(search)) ||
+        (student.className && student.className.toLowerCase().includes(search));
 
       if (!matchesSearch) {
+        return false;
+      }
+
+      if (this.classFilter !== 'all' && student.className !== this.classFilter) {
         return false;
       }
 
@@ -127,6 +173,10 @@ export class Students {
         comparison = a.name.localeCompare(b.name);
       } else if (this.sortBy === 'marks') {
         comparison = a.marks - b.marks;
+      } else if (this.sortBy === 'attendance') {
+        comparison =
+          calculateAttendancePercentage(a.attendanceRecords) -
+          calculateAttendancePercentage(b.attendanceRecords);
       } else {
         comparison = a.id - b.id;
       }
@@ -136,7 +186,118 @@ export class Students {
     return list;
   }
 
-  toggleSort(field: 'id' | 'name' | 'marks'): void {
+  get isAllSelected(): boolean {
+    const visible = this.filteredStudents;
+    return visible.length > 0 && visible.every((s) => this.selectedStudentIds.has(s.id));
+  }
+
+  toggleSelectAll(): void {
+    const visible = this.filteredStudents;
+    if (this.isAllSelected) {
+      for (const s of visible) {
+        this.selectedStudentIds.delete(s.id);
+      }
+    } else {
+      for (const s of visible) {
+        this.selectedStudentIds.add(s.id);
+      }
+    }
+  }
+
+  toggleSelectStudent(id: number): void {
+    if (this.selectedStudentIds.has(id)) {
+      this.selectedStudentIds.delete(id);
+    } else {
+      this.selectedStudentIds.add(id);
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedStudentIds.clear();
+  }
+
+  // --- Bulk Actions ---
+  executeBulkDelete(): void {
+    const count = this.selectedStudentIds.size;
+    if (count === 0) return;
+
+    const confirmed =
+      typeof window !== 'undefined' && typeof window.confirm === 'function' && !navigator.userAgent.includes('jsdom')
+        ? window.confirm(`Permanently delete all ${count} selected students?`)
+        : true;
+
+    if (confirmed) {
+      this.studentService.deleteMultipleStudents(Array.from(this.selectedStudentIds));
+      this.selectedStudentIds.clear();
+      this.selectedStudent = null;
+      this.showAlert(`Deleted ${count} students.`, 'info');
+    }
+  }
+
+  executeBulkGraceMarks(): void {
+    const ids = Array.from(this.selectedStudentIds);
+    if (ids.length === 0) return;
+    this.studentService.applyGraceMarks(ids, this.bulkGraceMarks);
+    this.showAlert(`Awarded +${this.bulkGraceMarks} grace marks to ${ids.length} students.`, 'success');
+  }
+
+  executeBulkAssignClass(): void {
+    const ids = Array.from(this.selectedStudentIds);
+    if (ids.length === 0) return;
+    this.studentService.assignClassToMultiple(ids, this.bulkTargetClass);
+    this.showAlert(`Assigned ${ids.length} students to Class ${this.bulkTargetClass}.`, 'success');
+  }
+
+  executeBulkMarkAttendance(status: AttendanceStatus): void {
+    const ids = Array.from(this.selectedStudentIds);
+    if (ids.length === 0) return;
+    this.studentService.markBulkAttendance(ids, this.attendanceDate, status);
+    this.initAttendanceDraft();
+    this.showAlert(`Marked ${ids.length} students as ${status} on ${this.attendanceDate}.`, 'success');
+  }
+
+  // --- Attendance Register Management ---
+  initAttendanceDraft(): void {
+    this.attendanceDraft = {};
+    for (const s of this.studentService.students) {
+      const existing = s.attendanceRecords?.find((r) => r.date === this.attendanceDate);
+      this.attendanceDraft[s.id] = existing ? existing.status : 'present';
+    }
+  }
+
+  onAttendanceDateChange(): void {
+    this.initAttendanceDraft();
+  }
+
+  setStudentAttendanceDraft(studentId: number, status: AttendanceStatus): void {
+    this.attendanceDraft[studentId] = status;
+  }
+
+  markAllDraftPresent(): void {
+    for (const s of this.studentService.students) {
+      this.attendanceDraft[s.id] = 'present';
+    }
+  }
+
+  saveAttendanceRegister(): void {
+    const records = Object.entries(this.attendanceDraft).map(([idStr, status]) => ({
+      studentId: Number(idStr),
+      status,
+    }));
+    this.studentService.markAttendance(this.attendanceDate, records);
+    this.showAlert(`Attendance register for ${this.attendanceDate} saved successfully.`, 'success');
+  }
+
+  getStudentAttendanceRate(student: Student): number {
+    return calculateAttendancePercentage(student.attendanceRecords);
+  }
+
+  hasLowAttendance(student: Student): boolean {
+    return isLowAttendance(student.attendanceRecords);
+  }
+
+  // --- Sort & Form Submission ---
+  toggleSort(field: 'id' | 'name' | 'marks' | 'attendance'): void {
     if (this.sortBy === field) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
@@ -147,7 +308,6 @@ export class Students {
 
   submitForm(): void {
     const studentName = this.name.trim();
-
     if (!studentName) {
       this.showAlert('Please enter a student name.', 'warning');
       return;
@@ -176,11 +336,26 @@ export class Students {
       computer: c!,
     };
 
+    const profileData: Partial<Student> = {
+      className: this.className,
+      email: this.email.trim() || `${studentName.toLowerCase().replace(/\s+/g, '.')}@campusly.edu`,
+      phone: this.phone.trim(),
+      dateOfBirth: this.dateOfBirth,
+      gender: this.gender,
+      avatarUrl: this.avatarUrl,
+      parentContact: {
+        name: this.parentName.trim(),
+        phone: this.parentPhone.trim(),
+        relationship: this.parentRelation,
+      },
+    };
+
     if (this.editingStudentId !== null) {
       const updated = this.studentService.updateStudent(
         this.editingStudentId,
         studentName,
         subjectMarks,
+        profileData,
       );
       if (updated) {
         if (this.selectedStudent?.id === this.editingStudentId) {
@@ -188,15 +363,15 @@ export class Students {
             this.studentService.getStudentById(this.editingStudentId) || null;
         }
         this.showAlert(
-          `Student #${this.editingStudentId} updated successfully.`,
+          `Student #${this.editingStudentId} (${studentName}) profile updated.`,
           'success',
         );
       }
       this.cancelEdit();
     } else {
-      const created = this.studentService.addStudent(studentName, subjectMarks);
+      const created = this.studentService.addStudent(studentName, subjectMarks, profileData);
       this.showAlert(
-        `Student "${created.name}" enrolled successfully with GPA ${calculateGPA(created.marks).toFixed(1)}.`,
+        `Enrolled student "${created.name}" in Class ${created.className}.`,
         'success',
       );
       this.resetForm();
@@ -206,6 +381,16 @@ export class Students {
   startEdit(student: Student): void {
     this.editingStudentId = student.id;
     this.name = student.name;
+    this.className = student.className || '10-A';
+    this.email = student.email || '';
+    this.phone = student.phone || '';
+    this.dateOfBirth = student.dateOfBirth || '2008-01-01';
+    this.gender = student.gender || 'Prefer not to say';
+    this.avatarUrl = student.avatarUrl || '👨‍🎓';
+    this.parentName = student.parentContact?.name || '';
+    this.parentPhone = student.parentContact?.phone || '';
+    this.parentRelation = student.parentContact?.relationship || 'Guardian';
+
     const s = student.subjects;
     this.math = s.math;
     this.science = s.science;
@@ -230,6 +415,16 @@ export class Students {
 
   resetForm(): void {
     this.name = '';
+    this.className = '10-A';
+    this.email = '';
+    this.phone = '';
+    this.dateOfBirth = '2008-01-01';
+    this.gender = 'Prefer not to say';
+    this.avatarUrl = '👨‍🎓';
+    this.parentName = '';
+    this.parentPhone = '';
+    this.parentRelation = 'Guardian';
+
     this.math = null;
     this.science = null;
     this.english = null;
@@ -254,6 +449,7 @@ export class Students {
     if (this.editingStudentId === id) {
       this.cancelEdit();
     }
+    this.selectedStudentIds.delete(id);
     this.showAlert(`Student #${id} was deleted.`, 'info');
   }
 
@@ -276,9 +472,66 @@ export class Students {
   resetDemoData(): void {
     this.studentService.resetToDefault();
     this.selectedStudent = null;
+    this.selectedStudentIds.clear();
     this.cancelEdit();
     this.confirmingDeleteId = null;
+    this.initAttendanceDraft();
     this.showAlert('Reset records to default demo data.', 'info');
+  }
+
+  // --- CSV Import / Export ---
+  openImportModal(): void {
+    this.showImportModal = true;
+    this.importCsvText = '';
+    this.importErrors = [];
+    this.importSuccessCount = 0;
+  }
+
+  closeImportModal(): void {
+    this.showImportModal = false;
+  }
+
+  downloadCsvTemplate(): void {
+    const template = this.studentService.generateCsvTemplate();
+    if (typeof window !== 'undefined') {
+      const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'campusly_student_import_template.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  onCsvFileChange(event: any): void {
+    const file = event.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.importCsvText = e.target.result || '';
+    };
+    reader.readAsText(file);
+  }
+
+  executeCsvImport(): void {
+    if (!this.importCsvText.trim()) {
+      this.importErrors = ['Please upload a CSV file or paste CSV content.'];
+      return;
+    }
+    const result = this.studentService.importStudentsFromCsv(this.importCsvText);
+    this.importErrors = result.errors;
+    this.importSuccessCount = result.successCount;
+
+    if (result.successCount > 0) {
+      this.showAlert(`Successfully imported ${result.successCount} students!`, 'success');
+      this.initAttendanceDraft();
+      if (result.errors.length === 0) {
+        this.closeImportModal();
+      }
+    }
   }
 
   exportCsv(): void {
@@ -288,12 +541,12 @@ export class Students {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', 'campusly_student_grades.csv');
+      link.setAttribute('download', 'campusly_student_roster.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      this.showAlert('Student records & grades exported to CSV.', 'success');
+      this.showAlert('Complete student roster & attendance exported to CSV.', 'success');
     }
   }
 

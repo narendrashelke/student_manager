@@ -4,49 +4,141 @@
       "id": 1,
       "name": "Ayush",
       "marks": 90,
+      "className": "10-A",
+      "email": "ayush.sharma@campusly.edu",
+      "phone": "+91 98765 43210",
+      "dateOfBirth": "2008-05-14",
+      "gender": "Male",
+      "avatarUrl": "👨‍🎓",
+      "parentContact": {
+        "name": "Rakesh Sharma",
+        "phone": "+91 98765 43211",
+        "relationship": "Father"
+      },
       "subjects": {
         "math": 92,
         "science": 88,
         "english": 90,
         "history": 86,
         "computer": 94
-      }
+      },
+      "attendanceRecords": [
+        { "date": "2026-10-20", "status": "present" },
+        { "date": "2026-10-21", "status": "present" },
+        { "date": "2026-10-22", "status": "present" },
+        { "date": "2026-10-23", "status": "late" },
+        { "date": "2026-10-24", "status": "present" },
+        { "date": "2026-10-27", "status": "present" },
+        { "date": "2026-10-28", "status": "present" },
+        { "date": "2026-10-29", "status": "excused" },
+        { "date": "2026-10-30", "status": "present" },
+        { "date": "2026-10-31", "status": "present" }
+      ]
     },
     {
       "id": 2,
       "name": "John",
       "marks": 85,
+      "className": "10-B",
+      "email": "john.doe@campusly.edu",
+      "phone": "+1 555-0192",
+      "dateOfBirth": "2008-08-22",
+      "gender": "Male",
+      "avatarUrl": "🧑‍🎓",
+      "parentContact": {
+        "name": "Sarah Doe",
+        "phone": "+1 555-0193",
+        "relationship": "Mother"
+      },
       "subjects": {
         "math": 80,
         "science": 85,
         "english": 88,
         "history": 82,
         "computer": 90
-      }
+      },
+      "attendanceRecords": [
+        { "date": "2026-10-20", "status": "present" },
+        { "date": "2026-10-21", "status": "absent" },
+        { "date": "2026-10-22", "status": "present" },
+        { "date": "2026-10-23", "status": "present" },
+        { "date": "2026-10-24", "status": "late" },
+        { "date": "2026-10-27", "status": "present" },
+        { "date": "2026-10-28", "status": "present" },
+        { "date": "2026-10-29", "status": "present" },
+        { "date": "2026-10-30", "status": "absent" },
+        { "date": "2026-10-31", "status": "present" }
+      ]
     },
     {
       "id": 3,
       "name": "Alice",
       "marks": 95,
+      "className": "10-A",
+      "email": "alice.smith@campusly.edu",
+      "phone": "+1 555-0144",
+      "dateOfBirth": "2008-03-10",
+      "gender": "Female",
+      "avatarUrl": "👩‍🎓",
+      "parentContact": {
+        "name": "David Smith",
+        "phone": "+1 555-0145",
+        "relationship": "Father"
+      },
       "subjects": {
         "math": 98,
         "science": 96,
         "english": 92,
         "history": 94,
         "computer": 95
-      }
+      },
+      "attendanceRecords": [
+        { "date": "2026-10-20", "status": "present" },
+        { "date": "2026-10-21", "status": "present" },
+        { "date": "2026-10-22", "status": "present" },
+        { "date": "2026-10-23", "status": "present" },
+        { "date": "2026-10-24", "status": "present" },
+        { "date": "2026-10-27", "status": "present" },
+        { "date": "2026-10-28", "status": "present" },
+        { "date": "2026-10-29", "status": "present" },
+        { "date": "2026-10-30", "status": "present" },
+        { "date": "2026-10-31", "status": "present" }
+      ]
     },
     {
       "id": 4,
       "name": "Bob",
       "marks": 80,
+      "className": "10-B",
+      "email": "bob.miller@campusly.edu",
+      "phone": "+1 555-0188",
+      "dateOfBirth": "2008-11-05",
+      "gender": "Male",
+      "avatarUrl": "🦁",
+      "parentContact": {
+        "name": "Karen Miller",
+        "phone": "+1 555-0189",
+        "relationship": "Mother"
+      },
       "subjects": {
         "math": 78,
         "science": 82,
         "english": 75,
         "history": 80,
         "computer": 85
-      }
+      },
+      "attendanceRecords": [
+        { "date": "2026-10-20", "status": "absent" },
+        { "date": "2026-10-21", "status": "absent" },
+        { "date": "2026-10-22", "status": "present" },
+        { "date": "2026-10-23", "status": "absent" },
+        { "date": "2026-10-24", "status": "late" },
+        { "date": "2026-10-27", "status": "present" },
+        { "date": "2026-10-28", "status": "absent" },
+        { "date": "2026-10-29", "status": "present" },
+        { "date": "2026-10-30", "status": "present" },
+        { "date": "2026-10-31", "status": "late" }
+      ]
     }
   ]
 }

@@ -5,9 +5,12 @@ import {
   calculateGrade,
   isPassing,
   calculateGPA,
+  calculateAttendancePercentage,
+  isLowAttendance,
   GradeLevel,
   SUBJECTS,
   SubjectKey,
+  Student,
 } from './student.model';
 import { StudentService } from './student.service';
 
@@ -29,6 +32,14 @@ export class Dashboard {
 
   get classGPA(): number {
     return this.studentService.getClassGPA();
+  }
+
+  get attendanceRate(): number {
+    return this.studentService.getClassAttendanceRate();
+  }
+
+  get lowAttendanceStudents(): Student[] {
+    return this.studentService.getLowAttendanceStudents();
   }
 
   get passingStudents(): number {
@@ -69,6 +80,14 @@ export class Dashboard {
 
   getStudentGPA(marks: number): number {
     return calculateGPA(marks);
+  }
+
+  getStudentAttendance(student: Student): number {
+    return calculateAttendancePercentage(student.attendanceRecords);
+  }
+
+  hasLowAttendance(student: Student): boolean {
+    return isLowAttendance(student.attendanceRecords);
   }
 
   isStudentPassing(marks: number): boolean {
